@@ -22,10 +22,23 @@ const habitSchema = new Schema({
     required: true
   },
 
+  icon: {
+    type: String, 
+  },
+
+  color: {
+    type: String,
+  },
+
   frequency: {
     type: String,
-    enum: ["daily", "weekly"],
+    enum: ["daily", "weekly", "custom"],
     default: "daily"
+  },
+
+  daysOfTheWeek: {
+    type: [Number],
+    default: []
   },
 
   createdAt: {

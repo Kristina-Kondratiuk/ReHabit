@@ -4,6 +4,7 @@ import { config } from "dotenv";
 import connectDB from "./config/database.js";
 import User from "./models/User.js";
 
+import habitsRoutes from "./routes/habitsRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 
 config();
@@ -16,6 +17,7 @@ app.use(cors());
 app.use(json());
 
 app.use("/auth", authRoutes);
+app.use("/habits", habitsRoutes);
 
 app.get("/", (req, res) => {
   res.send("Habit App API Running");

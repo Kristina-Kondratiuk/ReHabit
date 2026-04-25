@@ -1,9 +1,10 @@
 import { Button, StyleSheet, TouchableOpacity, View } from "react-native";
 
-import { HelloWave } from "@/frontend/components/hello-wave";
-import { ThemedText } from "@/frontend/components/themed-text";
-import { ThemedView } from "@/frontend/components/themed-view";
-import TaskCheckbox from "@/frontend/components/ui/task-checkbox";
+import { HelloWave } from "@/components/hello-wave";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import TaskCheckbox from "@/components/ui/task-checkbox";
+
 
 export default function HomeScreen() {
   return (

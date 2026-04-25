@@ -15,6 +15,7 @@
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.8",
+    "axios": "^1.15.2",
     "expo": "~54.0.33",
     "expo-checkbox": "^55.0.3",
     "expo-constants": "~18.0.13",

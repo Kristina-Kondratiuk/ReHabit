@@ -23,7 +23,7 @@ app.get("/", (req, res) => {
   res.send("Habit App API Running");
 });
 
-app.get("/test-user", async (req, res) => {
+/*app.get("/test-user", async (req, res) => {
   const user = await User.create({
     username: "test",
     email: "test@test.com",
@@ -32,8 +32,8 @@ app.get("/test-user", async (req, res) => {
 
   res.json(user);
 }); //testing route for the database connection
-
-const PORT = process.env.PORT 
+*/
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

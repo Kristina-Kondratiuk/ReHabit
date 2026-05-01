@@ -24,7 +24,7 @@ router.post("/", authMiddleware, async (req, res) => {
         const { title, description, type, frequency, color, icon, daysOfTheWeek } = req.body;
 
         if (!title || !type) {
-            res.status(400).json({ message: "Title and type are required." });
+            return res.status(400).json({ message: "Title and type are required." });
         }
 
         const habit = await Habit.create({
@@ -86,7 +86,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
         res.json({ message: "Habit deleted successfully." });
     } catch (err) {
         console.log("Error: ", err);
-        res.status(500).json({ message: "Server error."});
+        res.status(500).json({ message: "Server error." });
     }
 });
 

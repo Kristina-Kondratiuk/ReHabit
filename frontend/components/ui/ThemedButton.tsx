@@ -29,6 +29,10 @@ export const ThemedButton = ({
 }: ThemedButtonProps) => {
   const primaryBackgroundColor = useThemeColor({ light: lightColor, dark: darkColor }, 'tint');
   const isChoice = variant === 'choice';
+  const primaryActiveBackground = '#7C3AED';
+  const primaryDisabledBackground = '#D1D5DB';
+  const primaryActiveText = '#FFFFFF';
+  const primaryDisabledText = '#6B7280';
   const neutralChoiceBackground = '#FFFFFF';
   const neutralChoiceShadow = '#676767';
   const choiceTokens = {
@@ -69,14 +73,15 @@ export const ThemedButton = ({
         styles.button,
         styles.primaryButton,
         {
-          backgroundColor: primaryBackgroundColor,
+          backgroundColor: disabled ? primaryDisabledBackground : (lightColor || darkColor ? primaryBackgroundColor : primaryActiveBackground),
           width,
           height,
-          opacity: disabled ? 0.6 : 1,
         },
       ];
 
-  const textStyle = isChoice ? [styles.text, styles.choiceText, { color: choiceTextColor }] : [styles.text, styles.primaryText];
+  const textStyle = isChoice
+    ? [styles.text, styles.choiceText, { color: choiceTextColor }]
+    : [styles.text, styles.primaryText, { color: disabled ? primaryDisabledText : primaryActiveText }];
 
   return (
     <TouchableOpacity

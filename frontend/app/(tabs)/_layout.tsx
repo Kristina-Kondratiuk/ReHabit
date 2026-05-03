@@ -5,7 +5,7 @@ import { HapticTab } from '@/components/haptic-tab';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import {Calendar, ChartLine, House, Plus, User} from 'lucide-react-native';
+import {Calendar, ChartLine, House, User} from 'lucide-react-native';
 import FabTabButton from '@/components/ui/FabTabButton';
 
 export default function TabLayout() {

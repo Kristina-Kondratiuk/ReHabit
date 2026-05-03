@@ -5,7 +5,6 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedButton } from '@/components/ui/ThemedButton';
 import ThemedInput from '@/components/ui/ThemedInput';
-import { authApi } from '@/lib/api';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -18,18 +17,18 @@ export default function Login() {
       return;
     }
 
-    try {
-      setLoading(true);
-      const response = await authApi.login({ email: email.trim(), password });
+    // try {
+    //   setLoading(true);
+    //   const response = await authApi.login({ email: email.trim(), password });
 
-      Alert.alert('Success', `Zalogowano, ${response.user.username}`);
-      router.replace('/(tabs)');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Login failed';
-      Alert.alert('Login error', message);
-    } finally {
-      setLoading(false);
-    }
+    //   Alert.alert('Success', `Zalogowano, ${response.user.username}`);
+    //   router.replace('/(tabs)');
+    // } catch (error) {
+    //   const message = error instanceof Error ? error.message : 'Login failed';
+    //   Alert.alert('Login error', message);
+    // } finally {
+    //   setLoading(false);
+    // }
   };
 
   return (

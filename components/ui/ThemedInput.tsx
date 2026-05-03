@@ -1,42 +1,85 @@
-import { StyleSheet, TextInput } from 'react-native'
-import React from 'react'
-import { useThemeColor } from '@/hooks/use-theme-color'
+import React, { useRef } from 'react';
+import {
+  Animated,
+  Easing,
+  StyleSheet,
+  TextInput,
+  type TextInputProps,
+} from 'react-native';
+import { Colors } from '../../constants/theme';
 
 export type ThemedInputProps = {
-lightColor?: string,
-darkColor?: string,
-type?: 'text' | 'password' | 'confirmPassword' | 'email'
-placeholder?: string
-}
+  lightColor?: string;
+  darkColor?: string;
+  type?: 'text' | 'password' | 'confirmPassword' | 'email';
+  placeholder?: string;
+} & TextInputProps;
+
+const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
 const ThemedInput = ({
-    lightColor,
-    darkColor,
-    type = 'text',
-    placeholder
+  lightColor,
+  darkColor,
+  type = 'text',
+  placeholder,
+  onFocus,
+  onBlur,
+  style,
+  ...rest
 }: ThemedInputProps) => {
-    const color = '#000'
-    const borderColor = useThemeColor({}, 'tint')
+  const focusAnim = useRef(new Animated.Value(0)).current;
+
+  const animateFocus = (toValue: 0 | 1) => {
+    Animated.timing(focusAnim, {
+      toValue,
+      duration: 180,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const animatedBorderColor = focusAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#B6B6B6', Colors.light.tint],
+  });
+
+  const handleFocus: NonNullable<TextInputProps['onFocus']> = (e) => {
+    animateFocus(1);
+    onFocus?.(e);
+  };
+
+  const handleBlur: NonNullable<TextInputProps['onBlur']> = (e) => {
+    animateFocus(0);
+    onBlur?.(e);
+  };
 
   return (
-    <TextInput
-      style={[{color, borderColor}, styles.input]}
+    <AnimatedTextInput
+      style={[styles.input, { borderColor: animatedBorderColor }, style]}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      underlineColorAndroid="transparent"
       placeholder={placeholder}
       keyboardType={type === 'email' ? 'email-address' : 'default'}
       secureTextEntry={type === 'password' || type === 'confirmPassword'}
+      {...rest}
     />
-  )
-}
+  );
+};
+
 const styles = StyleSheet.create({
-    input: {
-      padding: 16,
-      borderWidth: 2,
-      borderRadius: 11,
-      width: '100%',
-      height: 56,
-      marginBottom: 20,
-      fontSize: 16,
-      fontWeight: '500',
-    }
-})
-export default ThemedInput
+  input: {
+    padding: 16,
+    borderWidth: 2,
+    borderRadius: 11,
+    width: '100%',
+    height: 56,
+    marginBottom: 20,
+    fontSize: 16,
+    fontWeight: '500',
+    borderColor: '#B6B6B6',
+    overflow: 'hidden',
+  },
+});
+
+export default ThemedInput;

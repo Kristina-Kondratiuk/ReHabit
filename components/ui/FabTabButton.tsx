@@ -1,24 +1,20 @@
-import { View, StyleSheet, Pressable, Platform } from 'react-native'
+import { View, StyleSheet } from 'react-native'
 import React from 'react'
 import { Plus } from 'lucide-react-native'
-import * as Haptics from 'expo-haptics'
+import { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs'
+import { HapticTab } from '@/components/haptic-tab'
 
-const FabTabButton = (props: any) => {
+const FabTabButton = (props: BottomTabBarButtonProps) => {
 const {onPress, accessibilityState} = props;
 const focused = accessibilityState?.selected
 
   return (
-    <Pressable  onPress={() => {
-    if (Platform.OS === 'ios') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    onPress?.(); 
-  }} style={styles.fabWrap}>
+    <HapticTab {...props} onPress={onPress} style={styles.fabWrap}>
       <View style={styles.whiteUnderlayer}></View>
         <View style={[styles.fab, focused && styles.fabActive]}>
             <Plus color={"#fff"} size={28} strokeWidth={1.5}/>
         </View>
-    </Pressable>
+    </HapticTab>
   )
 }
 
@@ -44,11 +40,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#7C3AED',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 8,
   },
   fabActive: {
     backgroundColor: 'red',

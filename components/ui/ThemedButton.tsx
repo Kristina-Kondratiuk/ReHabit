@@ -6,7 +6,7 @@ type ThemedButtonProps = {
   title: string;
   onPress?: () => void;
   variant?: 'primary' | 'choice';
-  tone?: 'neutral' | 'success' | 'danger';
+  tone?: 'neutral' | 'green' | 'red';
   selected?: boolean;
   lightColor?: string;
   darkColor?: string;
@@ -32,11 +32,11 @@ export const ThemedButton = ({
   const neutralChoiceBackground = '#FFFFFF';
   const neutralChoiceShadow = '#676767';
   const choiceTokens = {
-    success: {
+    green: {
       selectedBackground: '#D8F4DD',
       selectedShadow: '#47FF66',
     },
-    danger: {
+    red: {
       selectedBackground: '#FFD6D6',
       selectedShadow: '#FF6767',
     },

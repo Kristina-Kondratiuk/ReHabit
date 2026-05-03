@@ -1,69 +1,147 @@
 import React, { useState } from 'react';
-import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback } from 'react-native';
+import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
 import { Link, router } from 'expo-router';
+import { Controller, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedButton } from '@/components/ui/ThemedButton';
 import ThemedInput from '@/components/ui/ThemedInput';
-import { authApi } from '@/lib/api';
+import { register } from '@/src/services/auth';
+import { registerSchema } from '@/src/validation/authSchemas';
+import { z } from 'zod';
+import { Colors } from '@/constants/theme';
+
+type RegisterForm = z.infer<typeof registerSchema>;
 
 const Register = () => {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  const handleRegister = async () => {
-    if (!username.trim() || !email.trim() || !password.trim()) {
-      Alert.alert('Validation', 'Wypełni wszystkie pola');
-      return;
-    }
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterForm>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      username: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+  });
 
-    if (password !== confirmPassword) {
-      Alert.alert('Validation', 'Hasła nie pasują do siebie');
-      return;
-    }
-
+  const onSubmit = async (data: RegisterForm) => {
     try {
-      setLoading(true);
-      const response = await authApi.register({
-        username: username.trim(),
-        email: email.trim(),
-        password,
-      });
-
-      Alert.alert('Success', `Konto utworzone!: ${response.user.username}`);
+      setServerError(null);
+      const response = await register(data.username, data.email, data.password);
+      const createdUsername = response?.user?.username || data.username.trim();
+      Alert.alert('Success', `Konto utworzone!: ${createdUsername}`);
       router.replace('/(tabs)');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Register failed';
-      Alert.alert('Register error', message);
-    } finally {
-      setLoading(false);
+      setServerError(error instanceof Error ? error.message : 'Register failed');
     }
   };
 
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={-130}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}>
           <ThemedView style={styles.cont}>
-            <ThemedText type="title" style={{ marginBottom: 40 }}>Rejestracja</ThemedText>
-            <ThemedInput placeholder="Username" type="text" value={username} onChangeText={setUsername} />
-            <ThemedInput placeholder="Email" type="email" value={email} onChangeText={setEmail} autoCapitalize="none" />
-            <ThemedInput placeholder="Hasło" autoComplete="off"
-              textContentType="none"
-              autoCorrect={false} type="password" value={password} onChangeText={setPassword} autoCapitalize="none" />
-            <ThemedInput placeholder="Powtórz hasło" autoComplete="off"
-              textContentType="none"
-              autoCorrect={false} type="confirmPassword" value={confirmPassword} onChangeText={setConfirmPassword} autoCapitalize="none" />
-            <ThemedButton title={loading ? 'Loading...' : 'Wejść'} onPress={handleRegister} disabled={loading} />
-            <Text style={styles.accLink}>Masz już konto? <Link href={'/login'} style={styles.link}>Zaloguj się</Link></Text>
+            <ThemedText type="title" style={{ marginBottom: 40, color: Colors.light.tint }}>Rejestracja</ThemedText>
+            <View style={styles.formContainer}>
+
+              <View style={styles.inputCont}>
+                <Controller
+                  control={control}
+                  name="username"
+                  render={({ field: { onChange, value } }) => (
+                    <ThemedInput
+                      placeholder="Username"
+                      type="text"
+                      value={value}
+                      onChangeText={onChange}
+                    />
+                  )}
+                />
+                {errors.username ? <Text style={styles.errorText}>{errors.username.message}</Text> : null}
+              </View>
+
+              <View style={styles.inputCont}>
+                <Controller
+                  control={control}
+                  name="email"
+                  render={({ field: { onChange, value } }) => (
+                    <ThemedInput
+                      placeholder="Email"
+                      type="email"
+                      value={value}
+                      onChangeText={onChange}
+                      autoCapitalize="none"
+                    />
+                  )}
+                />
+                {errors.email ? <Text style={styles.errorText}>{errors.email.message}</Text> : null}
+              </View>
+
+              <View style={styles.inputCont}>
+                <Controller
+                  control={control}
+                  name="password"
+                  render={({ field: { onChange, value } }) => (
+                    <ThemedInput
+                      placeholder="Hasło"
+                      type="password"
+                      value={value}
+                      onChangeText={onChange}
+                      autoCapitalize="none"
+                      autoComplete="off"
+                      textContentType="none"
+                      autoCorrect={false}
+                    />
+                  )}
+                />
+                {errors.password ? <Text style={styles.errorText}>{errors.password.message}</Text> : null}
+              </View>
+
+              <View style={styles.inputCont}>
+                <Controller
+                  control={control}
+                  name="confirmPassword"
+                  render={({ field: { onChange, value } }) => (
+                    <ThemedInput
+                      placeholder="Powtórz hasło"
+                      type="confirmPassword"
+                      value={value}
+                      onChangeText={onChange}
+                      autoCapitalize="none"
+                      autoComplete="off"
+                      textContentType="none"
+                      autoCorrect={false}
+                    />
+                  )}
+                />
+                {errors.confirmPassword ? <Text style={styles.errorText}>{errors.confirmPassword.message}</Text> : null}
+              </View>
+
+              {serverError ? <Text style={styles.errorText}>{serverError}</Text> : null}
+
+              <ThemedButton
+                title={isSubmitting ? 'Loading...' : 'Zarejestruj się'}
+                onPress={handleSubmit(onSubmit)}
+                disabled={isSubmitting}
+              />
+              <ThemedText type='link'>
+                Masz już konto? <Link href={'/(auth)/login'} style={styles.link}>Zaloguj się</Link>
+              </ThemedText>
+
+            </View>
           </ThemedView>
         </ScrollView>
       </TouchableWithoutFeedback>
@@ -73,10 +151,21 @@ const Register = () => {
 
 const styles = StyleSheet.create({
   link: {
-textDecorationLine: "underline"
+    textDecorationLine: 'underline',
   },
-  accLink: {
-    marginTop: 20
+  formContainer: {
+    gap: 24,
+    width: '100%',
+    alignItems: 'center',
+  },
+  inputCont: {
+    width: '100%',
+    gap: 4,
+  },
+  errorText: {
+    width: '100%',
+    color: '#DC2626',
+    fontSize: 12,
   },
   scrollContent: {
     flexGrow: 1,
@@ -87,7 +176,6 @@ textDecorationLine: "underline"
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
-    color: '#f1f1f1',
   },
 });
 

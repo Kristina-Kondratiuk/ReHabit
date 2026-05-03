@@ -10,6 +10,7 @@ import { ThemedButton } from "@/components/ui/ThemedButton";
 import { Bell } from "lucide-react-native";
 import { Colors } from "@/constants/theme";
 
+
 export default function HomeScreen() {
   const [selectedTone, setSelectedTone] = useState<"green" | "red" | null>(null);
 

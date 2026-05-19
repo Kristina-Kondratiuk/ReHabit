@@ -6,6 +6,14 @@ import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
+const isValidEmail = (email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
+
+const isValidPassword = (password) => {
+    return /^(?=.*[A-Za-z])(?=.*\d).{6,}$/.test(password);
+};
+
 // POST /auth/register
 router.post("/register", async (req, res) => {
     try {
@@ -15,6 +23,18 @@ router.post("/register", async (req, res) => {
             return res.status(400).json({
                 message: "Username, email and password are required"
             });
+        }
+
+        if (!isValidEmail(email)) {
+            return res.status(400).json({
+                message: "Invalid email format"
+            });
+        }
+
+        if (!isValidPassword(password)) {
+            return res.status(400).json({
+                message: "Password must be at least 6 characteres long and contain at least one letter and one number"
+            })
         }
 
         const existingUser = await User.findOne({ email });

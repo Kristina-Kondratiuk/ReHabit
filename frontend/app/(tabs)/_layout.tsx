@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import {Calendar, ChartLine, House, User} from 'lucide-react-native';
-import FabTabButton from '@/components/ui/FabTabButton';
+import FabTabButton from '@/components/ui/fab-tab-button';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();

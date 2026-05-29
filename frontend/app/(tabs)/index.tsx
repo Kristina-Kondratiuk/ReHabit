@@ -1,82 +1,53 @@
-import { StyleSheet, View } from "react-native";
-import { useState } from "react";
+import { StyleSheet, useColorScheme, View } from "react-native";
 
-import { HelloWave } from "@/components/hello-wave";
 import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import TaskCheckbox from "@/components/ui/task-checkbox";
 import { Link } from "expo-router";
-import { ThemedButton } from "@/components/ui/ThemedButton";
-import { Bell } from "lucide-react-native";
+import { Bell, Droplet, Dumbbell, Salad } from "lucide-react-native";
 import { Colors } from "@/constants/theme";
+import HabitToday from "@/components/habit-comp";
+import { ThemedView } from "@/components/themed-view";
+import { HorizontalCalendar } from "@/components/ui/horizontal-calendar";
 
 
 export default function HomeScreen() {
-  const [selectedTone, setSelectedTone] = useState<"green" | "red" | null>(null);
+  
+  const themeName = useColorScheme() ?? 'light';
+  const theme = Colors[themeName];
+  const themeBackground = theme.background
 
   return (
-    <View style={styles.mainContainer}>
+    <ThemedView style={styles.mainContainer}>
       <View style={styles.headerText}>
         <ThemedText type="subtitle">
-          Hello, User! <HelloWave />
+          Cześć, Kamila!
         </ThemedText>
-        <View style={styles.bell}><Bell color={Colors.light.tint} size={18}/></View>
+        <View style={[styles.bell, {backgroundColor: themeBackground}]}><Bell color={Colors.light.tint} size={18}/></View>
       </View>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="subtitle">Read a book</ThemedText>
-            <TaskCheckbox/>
-      </ThemedView>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="subtitle">Clean the room</ThemedText>
-            <TaskCheckbox/>
-      </ThemedView>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="subtitle">Train</ThemedText>
-            <TaskCheckbox/>
-      </ThemedView>
+      <HorizontalCalendar />
+      <ThemedText type="defaultSemiBold"> Zadania na dziś</ThemedText>
+      <HabitToday title="Jeść sniadanie" description="Chcę regularnie jeść śniadanie, aby mieć więcej energii rano i lepiej zaczynać dzień" icon={ <Salad size={28} strokeWidth={1.5} />} color="green"/>
+      <HabitToday title="Pić wodę" description="Chcę regularnie jeść śniadanie, aby mieć więcej energii rano i lepiej zaczynać dzień" icon={ <Droplet size={28} strokeWidth={1.5}/>} color="blue"/>
+      <HabitToday title="Ćwiczyć" description="Chcę regularnie jeść śniadanie, aby mieć więcej energii rano i lepiej zaczynać dzień" icon={<Dumbbell size={28} strokeWidth={1.5}/>} />
+
       <Link href={"/(auth)/login"}> Login link</Link>
       <Link href={"/(auth)/register"}> Register link</Link>
-      <View style={styles.choiceButtonsRow}>
-        <View style={styles.choiceButtonWrap}>
-          <ThemedButton
-            title="Nabywam"
-            variant="choice"
-            tone="green"
-            height={86}
-            selected={selectedTone === "green"}
-            onPress={() => setSelectedTone("green")}
-          />
-        </View>
-        <View style={styles.choiceButtonWrap}>
-          <ThemedButton
-            title="Pozbywam się"
-            variant="choice"
-            tone="red"
-            height={86}
-            selected={selectedTone === "red"}
-            onPress={() => setSelectedTone("red")}
-          />
-        </View>
-      </View>
-    </View>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
   bell: {
-    backgroundColor: '#fff',
     borderRadius: 70,
-    width: 34, 
-    height: 34,
+    width: 40,
+    height: 40,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 8,
-   shadowColor: Colors.light.tint,
-  shadowOffset: { width: 0, height: 0 },
-  shadowOpacity: 0.5, 
-  shadowRadius: 4,    
-  elevation: 10, 
+    shadowColor: Colors.light.tint,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
   },
   btn: {
     borderRadius: 20,
@@ -84,18 +55,16 @@ const styles = StyleSheet.create({
     height: 28,
   },
   headerText: {
-    marginBottom: 10,
-    display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
+    marginBottom: 12,
   },
   mainContainer: {
-    gap: 12,
-    backgroundColor: "#ffffff",
+    gap: 20,
     width: "100%",
     paddingHorizontal: 20,
-    paddingTop: 120,
+    paddingTop: 20,
     height: "100%",
   },
   titleContainer: {

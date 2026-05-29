@@ -5,16 +5,16 @@ import { StyleSheet, TouchableOpacity } from 'react-native';
 export default function TaskCheckbox() {
     const [checked, setChecked] = useState(false);
 
-
-  return (
-    <TouchableOpacity>
-        <ExpoCheckbox
-        value={checked}
-        onValueChange={setChecked}
-        color={checked ? '#4CAF50' : undefined}
-        style={s.checkbox}/>
-    </TouchableOpacity>
-  );
+    return (
+        <TouchableOpacity>
+            <ExpoCheckbox
+                hitSlop={40}
+                value={checked}
+                onValueChange={setChecked}
+                color={checked ? '#4CAF50' : undefined}
+                style={s.checkbox} />
+        </TouchableOpacity>
+    );
 };
 
 

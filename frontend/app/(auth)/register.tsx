@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
-import { Link, router } from 'expo-router';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { Link } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedButton } from '@/components/ui/ThemedButton';
 import ThemedInput from '@/components/ui/ThemedInput';
-import { register } from '@/src/services/auth';
+import { useAuth } from '@/src/context/auth-context';
 import { registerSchema } from '@/src/validation/authSchemas';
 import { z } from 'zod';
 import { Colors } from '@/constants/theme';
@@ -16,6 +16,7 @@ type RegisterForm = z.infer<typeof registerSchema>;
 
 const Register = () => {
   const [serverError, setServerError] = useState<string | null>(null);
+  const { signUp } = useAuth();
 
   const {
     control,
@@ -34,10 +35,7 @@ const Register = () => {
   const onSubmit = async (data: RegisterForm) => {
     try {
       setServerError(null);
-      const response = await register(data.username, data.email, data.password);
-      const createdUsername = response?.user?.username || data.username.trim();
-      Alert.alert('Success', `Konto utworzone!: ${createdUsername}`);
-      router.replace('/(tabs)');
+      await signUp(data.username, data.email, data.password);
     } catch (error) {
       setServerError(error instanceof Error ? error.message : 'Register failed');
     }

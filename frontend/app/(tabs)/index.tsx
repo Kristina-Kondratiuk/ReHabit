@@ -1,7 +1,6 @@
 import { StyleSheet, useColorScheme, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
-import { Link } from "expo-router";
 import { Bell, Droplet, Dumbbell, Salad } from "lucide-react-native";
 import { Colors } from "@/constants/theme";
 import HabitToday from "@/components/habit-comp";
@@ -29,8 +28,6 @@ export default function HomeScreen() {
       <HabitToday title="Pić wodę" description="Chcę regularnie jeść śniadanie, aby mieć więcej energii rano i lepiej zaczynać dzień" icon={ <Droplet size={28} strokeWidth={1.5}/>} color="blue"/>
       <HabitToday title="Ćwiczyć" description="Chcę regularnie jeść śniadanie, aby mieć więcej energii rano i lepiej zaczynać dzień" icon={<Dumbbell size={28} strokeWidth={1.5}/>} />
 
-      <Link href={"/(auth)/login"}> Login link</Link>
-      <Link href={"/(auth)/register"}> Register link</Link>
     </ThemedView>
   );
 }

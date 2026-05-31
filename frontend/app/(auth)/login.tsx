@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
-import { Link, router } from 'expo-router';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { Link } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedButton } from '@/components/ui/ThemedButton';
 import ThemedInput from '@/components/ui/ThemedInput';
-import { login } from '@/src/services/auth';
+import { useAuth } from '@/src/context/auth-context';
 import { loginSchema } from '@/src/validation/authSchemas';
 import { z } from 'zod';
 import { Colors } from '@/constants/theme';
@@ -16,6 +16,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const [serverError, setServerError] = useState<string | null>(null);
+  const { signIn } = useAuth();
 
   const {
     control,
@@ -32,10 +33,7 @@ export default function Login() {
   const onSubmit = async (data: LoginForm) => {
     try {
       setServerError(null);
-      const response = await login(data.email, data.password);
-      const username = response?.user?.username || 'user';
-      Alert.alert('Success', `Zalogowano, ${username}`);
-      router.replace('/(tabs)');
+      await signIn(data.email, data.password);
     } catch (error) {
       setServerError(error instanceof Error ? error.message : 'Login failed');
     }

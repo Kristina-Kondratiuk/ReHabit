@@ -44,7 +44,7 @@ const CalendarDay = ({ date, selected = false, dayWidth, onPress }: CalendarDayP
       style={[
         styles.day,
         {
-          borderColor: theme.tint,
+          borderColor: Colors.common.tint,
           backgroundColor: theme.background,
           width: dayWidth,
         },
@@ -52,7 +52,7 @@ const CalendarDay = ({ date, selected = false, dayWidth, onPress }: CalendarDayP
     >
       <Text style={[styles.dayNumber, { color: theme.text }]}>{date?.day}</Text>
       <Text style={[styles.weekday, { color: theme.text }]}>{weekday}</Text>
-      {selected ? <View style={[styles.dot, { backgroundColor: theme.tint }]} /> : null}
+      {selected ? <View style={[styles.dot, { backgroundColor: Colors.common.tint }]} /> : null}
     </Pressable>
   );
 };
@@ -79,7 +79,7 @@ export const HorizontalCalendar = ({ onDateChange }: HorizontalCalendarProps) =>
       calendarBackground: 'transparent',
       textSectionTitleColor: 'transparent',
       dayTextColor: theme.text,
-      todayTextColor: theme.tint,
+      todayTextColor: Colors.common.tint,
       selectedDayTextColor: theme.text,
       selectedDayBackgroundColor: 'transparent',
       textDisabledColor: theme.descr,
@@ -106,7 +106,7 @@ export const HorizontalCalendar = ({ onDateChange }: HorizontalCalendarProps) =>
         },
       },
     }),
-    [dayWidth, theme.descr, theme.text, theme.tint],
+    [dayWidth, theme.descr, theme.text],
   );
 
   const handleDayPress = (day?: DateData) => {

@@ -2,7 +2,7 @@ import { Modal, Pressable, StyleSheet, Text } from 'react-native';
 import { Check } from 'lucide-react-native';
 import { useState } from 'react';
 
-import { Colors, getHabitColorTokens, habitColorNames, type HabitColorName } from '@/constants/theme';
+import { Colors, habitColorNames, type HabitColorName } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 type HabitColorPickerProps = {
@@ -21,10 +21,11 @@ export const HabitColorPicker = ({ selectedColor, onSelectColor }: HabitColorPic
   const [isOpen, setIsOpen] = useState(false);
   const themeName = useColorScheme() ?? 'light';
   const theme = Colors[themeName];
-  const selectedTokens = getHabitColorTokens(themeName, selectedColor);
+  const selectedBackground = Colors[themeName][selectedColor];
+  const selectedAccent = Colors.common[selectedColor];
   const selectedShadowStyle = themeName === 'dark'
     ? {
-        shadowColor: selectedTokens.shadow,
+        shadowColor: selectedAccent,
         shadowOpacity: 1,
         elevation: 4,
       }
@@ -46,7 +47,7 @@ export const HabitColorPicker = ({ selectedColor, onSelectColor }: HabitColorPic
         style={[
           styles.trigger,
           {
-            backgroundColor: selectedTokens.background,
+            backgroundColor: selectedBackground,
           },
           selectedShadowStyle,
         ]}
@@ -65,11 +66,12 @@ export const HabitColorPicker = ({ selectedColor, onSelectColor }: HabitColorPic
             ]}
           >
             {habitColorNames.map((color) => {
-              const tokens = getHabitColorTokens(themeName, color);
+              const optionBackground = Colors[themeName][color];
+              const optionAccent = Colors.common[color];
               const isSelected = selectedColor === color;
               const optionShadowStyle = themeName === 'dark'
                 ? {
-                    shadowColor: tokens.shadow,
+                    shadowColor: optionAccent,
                     shadowOpacity: 1,
                     elevation: 3,
                   }
@@ -87,13 +89,13 @@ export const HabitColorPicker = ({ selectedColor, onSelectColor }: HabitColorPic
                   style={[
                     styles.option,
                     {
-                      backgroundColor: tokens.background,
+                      backgroundColor: optionBackground,
                     },
                     optionShadowStyle,
                   ]}
                 >
                   <Text style={[styles.optionText, { color: theme.text }]}>{colorLabels[color]}</Text>
-                  {isSelected ? <Check color={tokens.border} size={18} strokeWidth={2.5} /> : null}
+                  {isSelected ? <Check color={optionAccent} size={18} strokeWidth={2.5} /> : null}
                 </Pressable>
               );
             })}
@@ -123,7 +125,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: 24,
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    backgroundColor: Colors.common.overlay,
   },
   modal: {
     gap: 12,

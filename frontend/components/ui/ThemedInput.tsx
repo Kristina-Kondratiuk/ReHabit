@@ -42,7 +42,7 @@ const ThemedInput = ({
 
   const animatedBorderColor = focusAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ['#B6B6B6', Colors.light.tint],
+    outputRange: [Colors.common.inputBorder, Colors.common.tint],
   });
 
   const handleFocus: NonNullable<TextInputProps['onFocus']> = (e) => {
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     height: 56,
     fontSize: 16,
     fontWeight: '500',
-    borderColor: '#B6B6B6',
+    borderColor: Colors.common.inputBorder,
     overflow: 'hidden',
   },
 });

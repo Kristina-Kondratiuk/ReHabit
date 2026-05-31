@@ -1,7 +1,7 @@
 import { View, StyleSheet, Text } from 'react-native';
 import React, { ReactNode } from 'react';
 import TaskCheckbox from './ui/task-checkbox';
-import { Colors, getHabitColorTokens, type HabitColorName } from '@/constants/theme';
+import { Colors, type HabitColorName } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 type HabitTodayProps = {
@@ -14,10 +14,11 @@ type HabitTodayProps = {
 const HabitToday = ({ title, description, icon, color = 'purple' }: HabitTodayProps) => {
     const themeName = useColorScheme() ?? 'light';
     const theme = Colors[themeName];
-    const habitColor = getHabitColorTokens(themeName, color);
+    const habitBackground = Colors[themeName][color];
+    const habitShadow = Colors.common[color];
     const shadowStyle = themeName === 'dark'
         ? {
-            shadowColor: habitColor.shadow,
+            shadowColor: habitShadow,
             shadowOffset: { width: 0, height: 0 },
             shadowOpacity: 1,
             shadowRadius: 4,
@@ -33,13 +34,13 @@ const HabitToday = ({ title, description, icon, color = 'purple' }: HabitTodayPr
             style={[
                 styles.habitCont,
                 {
-                    backgroundColor: habitColor.background,
+                    backgroundColor: habitBackground,
                 },
                 shadowStyle,
             ]}
         >
             <View style={styles.content}>
-                <View style={[styles.iconView, { backgroundColor: '#ffff' }]}>
+                <View style={[styles.iconView, { backgroundColor: Colors.common.white }]}>
                     {icon}
                 </View>
                 <View style={styles.textCont}>
@@ -60,7 +61,6 @@ const styles = StyleSheet.create({
         paddingBottom: 30,
         paddingHorizontal: 16,
         justifyContent: 'center',
-        backgroundColor: '#E1F7DD',
         borderRadius: 16,
     },
     content: {
@@ -75,7 +75,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         width: 60,
         height: 60,
-        backgroundColor: '#fff',
         padding: 12,
         borderRadius: 50,
     },

@@ -52,7 +52,7 @@ export default function Login() {
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}>
           <ThemedView style={styles.cont}>
-            <ThemedText type="title" style={{ marginBottom: 40, color: Colors.light.tint }}>Logowanie</ThemedText>
+            <ThemedText type="title" style={{ marginBottom: 40, color: Colors.common.tint }}>Logowanie</ThemedText>
             <View style={styles.formContainer}>
 
               <View style={styles.inputCont}>
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     width: '100%',
-    color: '#DC2626',
+    color: Colors.common.error,
     fontSize: 12,
   },
   scrollContent: {

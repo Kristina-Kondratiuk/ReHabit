@@ -5,57 +5,58 @@
 
 import { Platform } from 'react-native';
 
-const tintColor = '#9747FF';
 export const habitColorNames = ['yellow', 'green', 'blue', 'purple'] as const;
 
 export type AppThemeName = 'light' | 'dark';
 export type HabitColorName = (typeof habitColorNames)[number];
-type HabitShadowColorName = `${HabitColorName}Shadow`;
 
-export const Colors = {
+const commonColors = {
+  white: '#FFFFFF',
+  black: '#000000',
+  textDark: '#ECEDEE',
+  textSecondary: '#676767',
+  inputBorder: '#B6B6B6',
+  icon: '#9BA1A6',
+  tint: '#9747FF',
+  tintDark: '#7C3AED',
+  overlay: 'rgba(0, 0, 0, 0.55)',
+  error: '#DC2626',
+  success: '#4CAF50',
+
+  green: '#30D158',
+  blue: '#64D2FF',
+  yellow: '#FFD60A',
+  purple: '#9747FF',
+} as const;
+
+const themedColors = {
   light: {
-    text: '#000000',
-    background: '#fff',
-    tint: tintColor,
-    icon: '#B6B6B6',
-    tabIconDefault: '#B6B6B6',
-    tabIconSelected: tintColor,
+    text: commonColors.black,
+    background: commonColors.white,
+    descr: commonColors.textSecondary,
+    icon: commonColors.icon,
     yellow: '#FFF5C0',
     green: '#E1F7DD',
     blue: '#DEF3FA',
     purple: '#ECE3F4',
-    yellowShadow: '#FFD60A',
-    greenShadow: '#47FF66',
-    blueShadow: '#30B0C7',
-    purpleShadow: tintColor,
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#000000',
-    tint: tintColor,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColor,
+    text: commonColors.textDark,
+    background: commonColors.black,
+    descr: '#9BA1A6',
+    icon: commonColors.icon,
     yellow: '#2B2610',
     green: '#1A2A1D',
     blue: '#162633',
     purple: '#22192D',
-    yellowShadow: '#FFD60A',
-    greenShadow: '#30D158',
-    blueShadow: '#64D2FF',
-    purpleShadow: tintColor,
   },
-};
+} as const;
 
-export const getHabitColorTokens = (theme: AppThemeName, color: HabitColorName) => {
-  const shadowKey = `${color}Shadow` as HabitShadowColorName;
-
-  return {
-    background: Colors[theme][color],
-    border: Colors[theme][shadowKey],
-    shadow: Colors.dark[shadowKey],
-  };
-};
+export const Colors = {
+  common: commonColors,
+  light: themedColors.light,
+  dark: themedColors.dark,
+} as const;
 
 export const Fonts = Platform.select({
   ios: {

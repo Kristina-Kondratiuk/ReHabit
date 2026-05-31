@@ -21,7 +21,7 @@ export default function HomeScreen() {
         <ThemedText type="subtitle">
           Cześć, Kamila!
         </ThemedText>
-        <View style={[styles.bell, {backgroundColor: themeBackground}]}><Bell color={Colors.light.tint} size={18}/></View>
+        <View style={[styles.bell, {backgroundColor: themeBackground}]}><Bell color={Colors.common.tint} size={18}/></View>
       </View>
       <HorizontalCalendar />
       <ThemedText type="defaultSemiBold"> Zadania na dziś</ThemedText>
@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 8,
-    shadowColor: Colors.light.tint,
+    shadowColor: Colors.common.tint,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 4,

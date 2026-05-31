@@ -1,10 +1,20 @@
 import React from 'react';
 import { Redirect, Stack } from 'expo-router';
+import { ActivityIndicator, View } from 'react-native';
 
+import { Colors } from '@/constants/theme';
 import { useAuth } from '@/src/context/auth-context';
 
 const AuthLayout = () => {
-  const { session } = useAuth();
+  const { session, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.light.background }}>
+        <ActivityIndicator size="large" color={Colors.common.tint} />
+      </View>
+    );
+  }
 
   if (session) {
     return <Redirect href="/(tabs)" />;

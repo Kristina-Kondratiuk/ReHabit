@@ -1,5 +1,6 @@
 import { Redirect, Tabs } from 'expo-router';
 import React from 'react';
+import { ActivityIndicator, View } from 'react-native';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,7 +11,15 @@ import { useAuth } from '@/src/context/auth-context';
 
 export default function TabLayout() {
  const insets = useSafeAreaInsets();
-  const { session } = useAuth();
+  const { session, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.light.background }}>
+        <ActivityIndicator size="large" color={Colors.common.tint} />
+      </View>
+    );
+  }
 
   if (!session) {
     return <Redirect href="/(auth)/login" />;

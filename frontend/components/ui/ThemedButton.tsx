@@ -28,7 +28,7 @@ export const ThemedButton = ({
   width = '100%',
   height = 60,
 }: ThemedButtonProps) => {
-  const primaryBackgroundColor = useThemeColor({ light: lightColor, dark: darkColor }, 'tint');
+  const primaryBackgroundColor = useThemeColor({ light: lightColor, dark: darkColor }, 'purple');
   const isChoice = variant === 'choice';
   const primaryActiveBackground = Colors.common.tintDark;
   const primaryDisabledBackground = '#D1D5DB';

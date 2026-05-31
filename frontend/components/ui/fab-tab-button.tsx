@@ -3,6 +3,7 @@ import React from 'react'
 import { Plus } from 'lucide-react-native'
 import { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs'
 import { HapticTab } from '@/components/haptic-tab'
+import { Colors } from '@/constants/theme'
 
 const FabTabButton = (props: BottomTabBarButtonProps) => {
 const {onPress, accessibilityState} = props;
@@ -12,7 +13,7 @@ const focused = accessibilityState?.selected
     <HapticTab {...props} onPress={onPress} style={styles.fabWrap}>
       <View style={styles.whiteUnderlayer}></View>
         <View style={[styles.fab, focused && styles.fabActive]}>
-            <Plus color={"#fff"} size={28} strokeWidth={1.5}/>
+            <Plus color={Colors.common.white} size={28} strokeWidth={1.5}/>
         </View>
     </HapticTab>
   )
@@ -29,7 +30,6 @@ const styles = StyleSheet.create({
     width: 78,
     height: 78,
     borderRadius: 100,
-    backgroundColor: '#fff'
   },
   fab: {
     position: 'absolute',
@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#7C3AED',
+    backgroundColor: Colors.common.tintDark,
     alignItems: 'center',
     justifyContent: 'center',
   },

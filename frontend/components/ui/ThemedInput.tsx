@@ -7,6 +7,7 @@ import {
   type TextInputProps,
 } from 'react-native';
 import { Colors } from '../../constants/theme';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 export type ThemedInputProps = {
   lightColor?: string;
@@ -28,6 +29,7 @@ const ThemedInput = ({
   ...rest
 }: ThemedInputProps) => {
   const focusAnim = useRef(new Animated.Value(0)).current;
+  const textColor = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
 
   const animateFocus = (toValue: 0 | 1) => {
     Animated.timing(focusAnim, {
@@ -40,7 +42,7 @@ const ThemedInput = ({
 
   const animatedBorderColor = focusAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ['#B6B6B6', Colors.light.tint],
+    outputRange: [Colors.common.inputBorder, Colors.common.tint],
   });
 
   const handleFocus: NonNullable<TextInputProps['onFocus']> = (e) => {
@@ -55,7 +57,7 @@ const ThemedInput = ({
 
   return (
     <AnimatedTextInput
-      style={[styles.input, { borderColor: animatedBorderColor }, style]}
+      style={[styles.input, { borderColor: animatedBorderColor, color: textColor }, style]}
       onFocus={handleFocus}
       onBlur={handleBlur}
       underlineColorAndroid="transparent"
@@ -74,10 +76,9 @@ const styles = StyleSheet.create({
     borderRadius: 11,
     width: '100%',
     height: 56,
-    marginBottom: 20,
     fontSize: 16,
     fontWeight: '500',
-    borderColor: '#B6B6B6',
+    borderColor: Colors.common.inputBorder,
     overflow: 'hidden',
   },
 });

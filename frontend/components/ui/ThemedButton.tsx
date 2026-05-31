@@ -1,6 +1,7 @@
 import { TouchableOpacity, StyleSheet, type DimensionValue } from 'react-native';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { ThemedText } from '@/components/themed-text';
+import { Colors } from '@/constants/theme';
 
 type ThemedButtonProps = {
   title: string;
@@ -29,8 +30,12 @@ export const ThemedButton = ({
 }: ThemedButtonProps) => {
   const primaryBackgroundColor = useThemeColor({ light: lightColor, dark: darkColor }, 'tint');
   const isChoice = variant === 'choice';
-  const neutralChoiceBackground = '#FFFFFF';
-  const neutralChoiceShadow = '#676767';
+  const primaryActiveBackground = Colors.common.tintDark;
+  const primaryDisabledBackground = '#D1D5DB';
+  const primaryActiveText = Colors.common.white;
+  const primaryDisabledText = '#6B7280';
+  const neutralChoiceBackground = Colors.common.white;
+  const neutralChoiceShadow = Colors.common.textSecondary;
   const choiceTokens = {
     green: {
       selectedBackground: '#D8F4DD',
@@ -41,14 +46,14 @@ export const ThemedButton = ({
       selectedShadow: '#FF6767',
     },
     neutral: {
-      selectedBackground: '#ffffff',
+      selectedBackground: Colors.common.white,
       selectedShadow: '#ECEEF2',
     },
   }[tone];
 
   const choiceBackgroundColor = selected ? choiceTokens.selectedBackground : neutralChoiceBackground;
   const choiceShadowColor = selected ? choiceTokens.selectedShadow : neutralChoiceShadow;
-  const choiceTextColor = selected ? '#111827' : '#676767';
+  const choiceTextColor = selected ? '#111827' : Colors.common.textSecondary;
 
   const buttonStyle = isChoice
     ? [
@@ -69,14 +74,15 @@ export const ThemedButton = ({
         styles.button,
         styles.primaryButton,
         {
-          backgroundColor: primaryBackgroundColor,
+          backgroundColor: disabled ? primaryDisabledBackground : (lightColor || darkColor ? primaryBackgroundColor : primaryActiveBackground),
           width,
           height,
-          opacity: disabled ? 0.6 : 1,
         },
       ];
 
-  const textStyle = isChoice ? [styles.text, styles.choiceText, { color: choiceTextColor }] : [styles.text, styles.primaryText];
+  const textStyle = isChoice
+    ? [styles.text, styles.choiceText, { color: choiceTextColor }]
+    : [styles.text, styles.primaryText, { color: disabled ? primaryDisabledText : primaryActiveText }];
 
   return (
     <TouchableOpacity
@@ -113,7 +119,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   primaryText: {
-    color: '#fff',
+    color: Colors.common.white,
   },
   choiceText: {
     color: '#111827',

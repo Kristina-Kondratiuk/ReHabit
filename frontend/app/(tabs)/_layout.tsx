@@ -1,21 +1,25 @@
-import { Tabs } from 'expo-router';
+import { Redirect, Tabs } from 'expo-router';
 import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import {Calendar, ChartLine, House, Plus, User} from 'lucide-react-native';
-import FabTabButton from '@/components/ui/FabTabButton';
+import {Calendar, ChartLine, House, User} from 'lucide-react-native';
+import FabTabButton from '@/components/ui/fab-tab-button';
+import { useAuth } from '@/src/context/auth-context';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
  const insets = useSafeAreaInsets();
+  const { session } = useAuth();
+
+  if (!session) {
+    return <Redirect href="/(auth)/login" />;
+  }
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: Colors.common.tint,
         tabBarShowLabel: false,
         headerShown: false,
         tabBarButton: HapticTab,

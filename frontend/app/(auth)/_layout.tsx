@@ -1,18 +1,21 @@
-import { useColorScheme } from 'react-native'
-import React from 'react'
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
-import { Stack } from 'expo-router'
+import React from 'react';
+import { Redirect, Stack } from 'expo-router';
+
+import { useAuth } from '@/src/context/auth-context';
 
 const AuthLayout = () => {
-    const colorScheme = useColorScheme()
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name='login' options={{headerShown: false}} />
-        <Stack.Screen name='register' options={{headerShown: false}} />
-      </Stack>
-    </ThemeProvider>
-  )
-}
+  const { session } = useAuth();
 
-export default AuthLayout
+  if (session) {
+    return <Redirect href="/(tabs)" />;
+  }
+
+  return (
+    <Stack>
+      <Stack.Screen name="login" options={{ headerShown: false }} />
+      <Stack.Screen name="register" options={{ headerShown: false }} />
+    </Stack>
+  );
+};
+
+export default AuthLayout;

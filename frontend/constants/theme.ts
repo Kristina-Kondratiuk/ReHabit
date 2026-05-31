@@ -5,27 +5,58 @@
 
 import { Platform } from 'react-native';
 
-const tintColorLight = '#9747FF';
-const tintColorDark = '#fff';
+export const habitColorNames = ['yellow', 'green', 'blue', 'purple'] as const;
 
-export const Colors = {
+export type AppThemeName = 'light' | 'dark';
+export type HabitColorName = (typeof habitColorNames)[number];
+
+const commonColors = {
+  white: '#FFFFFF',
+  black: '#000000',
+  textDark: '#ECEDEE',
+  textSecondary: '#676767',
+  inputBorder: '#B6B6B6',
+  icon: '#9BA1A6',
+  tint: '#9747FF',
+  tintDark: '#7C3AED',
+  overlay: 'rgba(0, 0, 0, 0.55)',
+  error: '#DC2626',
+  success: '#4CAF50',
+
+  green: '#30D158',
+  blue: '#64D2FF',
+  yellow: '#FFD60A',
+  purple: '#9747FF',
+} as const;
+
+const themedColors = {
   light: {
-    text: '#9747FF',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#B6B6B6',
-    tabIconDefault: '#B6B6B6',
-    tabIconSelected: tintColorLight,
+    text: commonColors.black,
+    background: commonColors.white,
+    descr: commonColors.textSecondary,
+    icon: commonColors.icon,
+    yellow: '#FFF5C0',
+    green: '#E1F7DD',
+    blue: '#DEF3FA',
+    purple: '#ECE3F4',
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    text: commonColors.textDark,
+    background: commonColors.black,
+    descr: '#9BA1A6',
+    icon: commonColors.icon,
+    yellow: '#2B2610',
+    green: '#1A2A1D',
+    blue: '#162633',
+    purple: '#22192D',
   },
-};
+} as const;
+
+export const Colors = {
+  common: commonColors,
+  light: themedColors.light,
+  dark: themedColors.dark,
+} as const;
 
 export const Fonts = Platform.select({
   ios: {

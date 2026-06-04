@@ -4,17 +4,22 @@ import { Plus } from 'lucide-react-native'
 import { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs'
 import { HapticTab } from '@/components/haptic-tab'
 import { Colors } from '@/constants/theme'
+import { useThemeColor } from '@/hooks/use-theme-color'
 
 const FabTabButton = (props: BottomTabBarButtonProps) => {
-const {onPress, accessibilityState} = props;
-const focused = accessibilityState?.selected
+  const underlayerBackgroundColor = useThemeColor(
+    { light: Colors.common.white, dark: Colors.dark.grey },
+    'background'
+  )
+  const { onPress, accessibilityState } = props
+  const focused = accessibilityState?.selected
 
   return (
     <HapticTab {...props} onPress={onPress} style={styles.fabWrap}>
-      <View style={styles.whiteUnderlayer}></View>
-        <View style={[styles.fab, focused && styles.fabActive]}>
-            <Plus color={Colors.common.white} size={28} strokeWidth={1.5}/>
-        </View>
+      <View style={[styles.whiteUnderlayer, { backgroundColor: underlayerBackgroundColor }]} />
+      <View style={[styles.fab, focused && styles.fabActive]}>
+        <Plus color={Colors.common.white} size={28} strokeWidth={1.5} />
+      </View>
     </HapticTab>
   )
 }
@@ -26,10 +31,16 @@ const styles = StyleSheet.create({
   },
   whiteUnderlayer: {
     position: 'absolute',
-    top: -28,
-    width: 78,
-    height: 78,
-    borderRadius: 100,
+    top: -30,
+    width: 76,
+    height: 76,
+    borderRadius: 120,
+    backgroundColor: '#fff',
+    shadowColor: Colors.common.tint,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
   },
   fab: {
     position: 'absolute',

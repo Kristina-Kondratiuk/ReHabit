@@ -1,4 +1,5 @@
 import express from "express";
+import mongoose from "mongoose";
 import HabitLog from "../models/HabitLog.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 import Habit from "../models/Habit.js";
@@ -11,7 +12,7 @@ router.get("/", authMiddleware, async (req, res) => {
         const { month } = req.query; // "2026-05"
 
         if (!month) {
-            return res.status(404).json({ message: "Month is required" });
+            return res.status(400).json({ message: "Month is required" });
         }
 
         const start = new Date(`${month}-01`);
@@ -39,9 +40,13 @@ router.post("/:habitId/complete", authMiddleware, async (req, res) => {
     try {
         const { habitId } = req.params;
 
-        //add ObjectId validation? to avoid frontend sending smth like: /logs/abc123/complete
+        if (!mongoose.isValidObjectId(habitId)) {
+            return res.status(400).json({
+                message: "Invalid habit ID"
+            });
+        }
 
-        const today = new Date();  // time doesnt matter, the day has to be the same
+        const today = new Date();  
         today.setHours(0, 0, 0, 0); 
 
         const habit = await Habit.findOne({
@@ -51,7 +56,7 @@ router.post("/:habitId/complete", authMiddleware, async (req, res) => {
 
         if (!habit) {
             return res.status(404).json({ message: "Habit not found" });
-        } // needed or not
+        }
 
         let log = await HabitLog.findOneAndUpdate(
             {
@@ -81,6 +86,12 @@ router.delete("/:habitId/complete", authMiddleware, async (req, res) => {
     try {
         const { habitId } = req.params;
 
+        if (!mongoose.isValidObjectId(habitId)) {
+            return res.status(400).json({
+                message: "Invalid habit ID"
+            });
+        }
+
         const today = new Date(); 
         today.setHours(0, 0, 0, 0); 
 
@@ -91,7 +102,7 @@ router.delete("/:habitId/complete", authMiddleware, async (req, res) => {
 
         if (!habit) {
             return res.status(404).json({ message: "Habit not found" });
-        } // needed or not
+        }
 
         const deletedLog = await HabitLog.findOneAndDelete({
             habitId: habitId,
@@ -115,6 +126,12 @@ router.delete("/:habitId/complete", authMiddleware, async (req, res) => {
 router.get("/habit/:habitId/logs", authMiddleware, async (req, res) => {
     try {
         const { habitId } = req.params;
+
+        if (!mongoose.isValidObjectId(habitId)) {
+            return res.status(400).json({
+                message: "Invalid habit ID"
+            });
+        }
 
         const habit = await Habit.findOne({
             _id: habitId,

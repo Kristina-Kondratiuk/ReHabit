@@ -1,6 +1,6 @@
 import { Schema, model } from "mongoose";
 
-const habitLogSchema = new Schema({ // for tracking the progress
+const habitLogSchema = new Schema({
   habitId: {
     type: Schema.Types.ObjectId,
     ref: "Habit",
@@ -20,13 +20,13 @@ const habitLogSchema = new Schema({ // for tracking the progress
 
   completed: {
     type: Boolean,
-    default: true
+    default: false
   }
 });
 
-/* habitLogSchema.index( 
-  { habitId: 1, date: 1 },
+habitLogSchema.index( 
+  { habitId: 1, userId: 1, date: 1 },
   { unique: true }
-); for preventing logs for the same habit on the same day */
+); 
 
 export default model("HabitLog", habitLogSchema);

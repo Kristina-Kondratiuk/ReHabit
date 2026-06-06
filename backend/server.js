@@ -6,6 +6,7 @@ import User from "./models/User.js";
 
 import habitsRoutes from "./routes/habitsRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import logsRoutes from "./routes/logsRoutes.js";
 
 config();
 
@@ -18,21 +19,12 @@ app.use(json());
 
 app.use("/auth", authRoutes);
 app.use("/habits", habitsRoutes);
+app.use("/logs", logsRoutes);
 
 app.get("/", (req, res) => {
   res.send("Habit App API Running");
 });
 
-/*app.get("/test-user", async (req, res) => {
-  const user = await User.create({
-    username: "test",
-    email: "test@test.com",
-    passwordHash: "123456"
-  });
-
-  res.json(user);
-}); //testing route for the database connection
-*/
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

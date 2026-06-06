@@ -11,7 +11,7 @@ const isValidEmail = (email) => {
 };
 
 const isValidPassword = (password) => {
-    return /^(?=.*[A-Za-z])(?=.*\d).{6,}$/.test(password);
+    return /^(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{8,72}$/.test(password);
 };
 
 // POST /auth/register
@@ -33,8 +33,8 @@ router.post("/register", async (req, res) => {
 
         if (!isValidPassword(password)) {
             return res.status(400).json({
-                message: "Password must be at least 6 characteres long and contain at least one letter and one number"
-            })
+                message: "Password must be 8-72 characters long and contain at least one uppercase letter and one special character"
+            });
         }
 
         const existingUser = await User.findOne({ email });

@@ -21,7 +21,7 @@ router.get("/", authMiddleware, async (req, res) => {
 //POST /habits
 router.post("/", authMiddleware, async (req, res) => {
     try {
-        const { title, description, type, frequency, color, icon, daysOfTheWeek } = req.body;
+        const { title, description, type, frequency, daysOfTheWeek, weeklyDay, activeFrom, activeTo } = req.body;
 
         if (!title || !type) {
             return res.status(400).json({ message: "Title and type are required." });
@@ -33,9 +33,10 @@ router.post("/", authMiddleware, async (req, res) => {
             description,
             type,
             frequency,
-            icon,
-            color,
-            daysOfTheWeek
+            daysOfTheWeek,
+            weeklyDay,
+            activeFrom,
+            activeTo
         });
 
         res.status(201).json(habit);
@@ -50,11 +51,11 @@ router.post("/", authMiddleware, async (req, res) => {
 router.put("/:id", authMiddleware, async(req, res) => {
     try {
         const { id } = req.params;
-        const { title, description, type, frequency, color, icon, daysOfTheWeek } = req.body;
+        const { title, description, type, frequency, daysOfTheWeek, weeklyDay, activeFrom, activeTo } = req.body;
 
         const updatedHabit = await Habit.findOneAndUpdate(
             { _id: id, userId: req.user.userId },
-            { title, description, type, frequency, color, icon, daysOfTheWeek },
+            { title, description, type, frequency, daysOfTheWeek, weeklyDay, activeFrom, activeTo },
             { new: true, runValidators: true }
         );
 
@@ -87,6 +88,58 @@ router.delete("/:id", authMiddleware, async (req, res) => {
     } catch (err) {
         console.log("Error: ", err);
         res.status(500).json({ message: "Server error." });
+    }
+});
+
+// GET /habits/today
+
+router.get("/today", authMiddleware, async (req, res) => {
+    try {
+
+        const today = new Date();
+
+        const currentDay = today.getDay();
+
+        today.setHours(0, 0, 0, 0);
+
+        const habits = await Habit.find({ userId: req.user.userId });
+
+        const todaysHabits = habits.filter(habit => {
+            
+            if (habit.activeFrom > today) {
+                return false;
+            }
+
+            if (habit.activeTo && habit.activeTo < today) {
+                return false;
+            }
+
+            if (habit.frequency === 'daily') {
+                return true;
+            }
+
+            if (
+                habit.frequency === 'weekly' && 
+                habit.weeklyDay === currentDay 
+            ) {
+                return true;
+            }
+
+            if (
+                habit.frequency === 'custom' &&
+                habit.daysOfTheWeek.includes(currentDay)
+            ) {
+                return true;
+            }
+
+            return false;
+        });
+
+        res.json(todaysHabits);
+    } catch (err) {
+        console.log("Error: ", err);
+        res.status(500).json({ message: "Server error." });
+
     }
 });
 

@@ -17,7 +17,7 @@ const isValidPassword = (password) => {
 // POST /auth/register
 router.post("/register", async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        const { username, email, password, photoUri } = req.body;
 
         if(!username || !email || !password) {
             return res.status(400).json({
@@ -50,7 +50,8 @@ router.post("/register", async (req, res) => {
         const user = await User.create({
             username,
             email,
-            passwordHash
+            passwordHash,
+            photoUri
         });
 
         const token = jwt.sign(
@@ -65,7 +66,8 @@ router.post("/register", async (req, res) => {
             user: {
                 id: user._id,
                 username: user.username,
-                email: user.email
+                email: user.email,
+                photoUri: user.photoUri
             }
         });
     } catch (error) {
@@ -115,7 +117,8 @@ router.post("/login", async (req, res) => {
             user: {
                 id: user._id,
                 username: user.username,
-                email: user.email
+                email: user.email,
+                photoUri: user.photoUri
             }
         });
 
@@ -138,6 +141,40 @@ router.get("/me", authMiddleware, async (req, res) => {
         }
 
         res.json(user);
+    } catch (error) {
+        res.status(500).json({
+            message: "Server error"
+        });
+    }
+});
+
+// PATCH /auth/me/photo
+router.patch("/me/photo", authMiddleware, async (req, res) => {
+    try {
+        const { photoUri } = req.body;
+
+        if (photoUri === undefined) {
+            return res.status(400).json({
+                message: "Photo URI is required"
+            });
+        }
+
+        const user = await User.findByIdAndUpdate(
+            req.user.userId,
+            { photoUri },
+            { new: true }
+        ).select("-passwordHash");
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        res.json({
+            message: "Photo updated successfully",
+            user
+        });
     } catch (error) {
         res.status(500).json({
             message: "Server error"

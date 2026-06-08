@@ -7,6 +7,7 @@ import User from "./models/User.js";
 import habitsRoutes from "./routes/habitsRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import logsRoutes from "./routes/logsRoutes.js";
+import statisticsRoutes from "./routes/statisticsRoutes.js";
 
 config();
 
@@ -20,6 +21,7 @@ app.use(json());
 app.use("/auth", authRoutes);
 app.use("/habits", habitsRoutes);
 app.use("/logs", logsRoutes);
+app.use("/statistics", statisticsRoutes);
 
 app.get("/", (req, res) => {
   res.send("Habit App API Running");

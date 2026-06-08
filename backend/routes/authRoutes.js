@@ -148,6 +148,66 @@ router.get("/me", authMiddleware, async (req, res) => {
     }
 });
 
+// PATCH /auth/me
+router.patch("/me", authMiddleware, async (req, res) => {
+    try {
+        const { username, email } = req.body;
+
+        if (!username && !email) {
+            return res.status(400).json({
+                message: "At least one field is required"
+            });
+        }
+
+        if (email && !isValidEmail(email)) {
+            return res.status(400).json({
+                message: "Invalid email format"
+            });
+        }
+
+        if (email) {
+            const existingUser = await User.findOne({
+                email,
+                _id: { $ne: req.user.userId }
+            });
+
+            if (existingUser) {
+                return res.status(400).json({
+                    message: "Email already in use"
+                });
+            }
+        }
+
+        const updateData = {};
+
+        if (username) {
+            updateData.username = username;
+        }
+
+        if (email) {
+            updateData.email = email;
+        }
+
+        const user = await User.findByIdAndUpdate(
+            req.user.userId,
+            updateData,
+            { new: true, runValidators: true }
+        ).select("-passwordHash");
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        res.json({ message: "User updated successfully", user });
+    } catch (error) {
+        res.status(500).json({
+            message: "Server error"
+        });
+    }
+});
+
 // PATCH /auth/me/photo
 router.patch("/me/photo", authMiddleware, async (req, res) => {
     try {

@@ -26,12 +26,13 @@ export const login = async (email, password) => {
   }
 };
 
-export const register = async (username, email, password) => {
+export const register = async (username, email, password, photoUri = null) => {
   try {
     const res = await API.post("/auth/register", {
       username,
       email,
       password,
+      photoUri,
     });
 
     if (res.data?.token) {

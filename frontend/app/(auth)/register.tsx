@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { ActionSheetIOS, Alert, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
 import { Link } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,11 +11,16 @@ import { useAuth } from '@/src/context/auth-context';
 import { registerSchema } from '@/src/validation/authSchemas';
 import { z } from 'zod';
 import { Colors } from '@/constants/theme';
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
+import { Camera, CircleUserRound, UserRound } from 'lucide-react-native';
 
 type RegisterForm = z.infer<typeof registerSchema>;
 
 const Register = () => {
   const [serverError, setServerError] = useState<string | null>(null);
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
   const { signUp } = useAuth();
 
   const {
@@ -35,17 +40,95 @@ const Register = () => {
   const onSubmit = async (data: RegisterForm) => {
     try {
       setServerError(null);
-      await signUp(data.username, data.email, data.password);
+      await signUp(data.username, data.email, data.password, photoUri);
     } catch (error) {
       setServerError(error instanceof Error ? error.message : 'Register failed');
     }
+  };
+
+  const pickFromCamera = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Brak dostępu', 'Aby zrobić zdjęcie, włącz dostęp do aparatu w ustawieniach.');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      quality: 0.9,
+      aspect: [1, 1],
+    });
+
+    if (!result.canceled && result.assets[0]?.uri) {
+      setPhotoUri(result.assets[0].uri);
+    }
+  };
+
+  const pickFromGallery = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Brak dostępu', 'Aby wybrać zdjęcie, włącz dostęp do galerii w ustawieniach.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.9,
+      aspect: [1, 1],
+    });
+
+    if (!result.canceled && result.assets[0]?.uri) {
+      setPhotoUri(result.assets[0].uri);
+    }
+  };
+
+  const pickFromFiles = async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: 'image/*',
+      copyToCacheDirectory: true,
+      multiple: false,
+    });
+
+    if (!result.canceled && result.assets[0]?.uri) {
+      setPhotoUri(result.assets[0].uri);
+    }
+  };
+
+  const openPhotoOptions = () => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ['Cancel', 'Take a photo', 'Choose from gallery', 'Choose from files'],
+          cancelButtonIndex: 0,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) {
+            void pickFromCamera();
+          }
+          if (buttonIndex === 2) {
+            void pickFromGallery();
+          }
+          if (buttonIndex === 3) {
+            void pickFromFiles();
+          }
+        }
+      );
+      return;
+    }
+
+    Alert.alert('Add photo', 'Choose source', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Take a photo', onPress: () => void pickFromCamera() },
+      { text: 'Choose from gallery', onPress: () => void pickFromGallery() },
+      { text: 'Choose from files', onPress: () => void pickFromFiles() },
+    ]);
   };
 
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={-130}>
+      keyboardVerticalOffset={-100}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -54,6 +137,18 @@ const Register = () => {
           <ThemedView style={styles.cont}>
             <ThemedText type="title" style={{ marginBottom: 40, color: Colors.common.tint }}>Rejestracja</ThemedText>
             <View style={styles.formContainer}>
+              <Pressable onPress={openPhotoOptions} style={styles.photoPressable}>
+                <View style={styles.photoCircle}>
+                  {photoUri ? (
+                    <Image source={{ uri: photoUri }} style={styles.photoPreview} contentFit="cover" />
+                  ) : (
+                    <UserRound size={100} color="#F0F0F0" strokeWidth={1} />
+                  )}
+                </View>
+                <View style={styles.photoRow}>
+                  <ThemedText style={styles.photoLabel}>Dodaj zdjęcie</ThemedText>
+                </View>
+              </Pressable>
 
               <View style={styles.inputCont}>
                 <Controller
@@ -152,13 +247,40 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   formContainer: {
-    gap: 24,
+    gap: 16,
     width: '100%',
     alignItems: 'center',
   },
   inputCont: {
     width: '100%',
     gap: 4,
+  },
+  photoCircle: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: '#B6B6B6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  photoLabel: {
+    fontSize: 16,
+    lineHeight: 16,
+    color: '#222222',
+  },
+  photoPressable: {
+    alignItems: 'center',
+    gap: 10,
+  },
+  photoPreview: {
+    width: '100%',
+    height: '100%',
+  },
+  photoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   errorText: {
     width: '100%',
@@ -173,7 +295,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    paddingHorizontal: 20,
   },
 });
 

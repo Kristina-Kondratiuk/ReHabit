@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   formContainer: {
-    gap: 24,
+    gap: 16,
     width: '100%',
     alignItems: 'center',
   },

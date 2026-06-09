@@ -11,13 +11,13 @@ const isValidEmail = (email) => {
 };
 
 const isValidPassword = (password) => {
-    return /^(?=.*[A-Za-z])(?=.*\d).{6,}$/.test(password);
+    return /^(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{8,72}$/.test(password);
 };
 
 // POST /auth/register
 router.post("/register", async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        const { username, email, password, photoUri } = req.body;
 
         if(!username || !email || !password) {
             return res.status(400).json({
@@ -33,8 +33,8 @@ router.post("/register", async (req, res) => {
 
         if (!isValidPassword(password)) {
             return res.status(400).json({
-                message: "Password must be at least 6 characteres long and contain at least one letter and one number"
-            })
+                message: "Password must be 8-72 characters long and contain at least one uppercase letter and one special character"
+            });
         }
 
         const existingUser = await User.findOne({ email });
@@ -50,7 +50,8 @@ router.post("/register", async (req, res) => {
         const user = await User.create({
             username,
             email,
-            passwordHash
+            passwordHash,
+            photoUri
         });
 
         const token = jwt.sign(
@@ -65,7 +66,8 @@ router.post("/register", async (req, res) => {
             user: {
                 id: user._id,
                 username: user.username,
-                email: user.email
+                email: user.email,
+                photoUri: user.photoUri
             }
         });
     } catch (error) {
@@ -115,7 +117,8 @@ router.post("/login", async (req, res) => {
             user: {
                 id: user._id,
                 username: user.username,
-                email: user.email
+                email: user.email,
+                photoUri: user.photoUri
             }
         });
 
@@ -138,6 +141,100 @@ router.get("/me", authMiddleware, async (req, res) => {
         }
 
         res.json(user);
+    } catch (error) {
+        res.status(500).json({
+            message: "Server error"
+        });
+    }
+});
+
+// PATCH /auth/me
+router.patch("/me", authMiddleware, async (req, res) => {
+    try {
+        const { username, email } = req.body;
+
+        if (!username && !email) {
+            return res.status(400).json({
+                message: "At least one field is required"
+            });
+        }
+
+        if (email && !isValidEmail(email)) {
+            return res.status(400).json({
+                message: "Invalid email format"
+            });
+        }
+
+        if (email) {
+            const existingUser = await User.findOne({
+                email,
+                _id: { $ne: req.user.userId }
+            });
+
+            if (existingUser) {
+                return res.status(400).json({
+                    message: "Email already in use"
+                });
+            }
+        }
+
+        const updateData = {};
+
+        if (username) {
+            updateData.username = username;
+        }
+
+        if (email) {
+            updateData.email = email;
+        }
+
+        const user = await User.findByIdAndUpdate(
+            req.user.userId,
+            updateData,
+            { new: true, runValidators: true }
+        ).select("-passwordHash");
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        res.json({ message: "User updated successfully", user });
+    } catch (error) {
+        res.status(500).json({
+            message: "Server error"
+        });
+    }
+});
+
+// PATCH /auth/me/photo
+router.patch("/me/photo", authMiddleware, async (req, res) => {
+    try {
+        const { photoUri } = req.body;
+
+        if (photoUri === undefined) {
+            return res.status(400).json({
+                message: "Photo URI is required"
+            });
+        }
+
+        const user = await User.findByIdAndUpdate(
+            req.user.userId,
+            { photoUri },
+            { new: true }
+        ).select("-passwordHash");
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        res.json({
+            message: "Photo updated successfully",
+            user
+        });
     } catch (error) {
         res.status(500).json({
             message: "Server error"

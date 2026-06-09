@@ -22,14 +22,6 @@ const habitSchema = new Schema({
     required: true
   },
 
-  icon: {
-    type: String, 
-  },
-
-  color: {
-    type: String,
-  },
-
   frequency: {
     type: String,
     enum: ["daily", "weekly", "custom"],
@@ -39,6 +31,21 @@ const habitSchema = new Schema({
   daysOfTheWeek: {
     type: [Number],
     default: []
+  },
+
+  weeklyDay: {
+    type: Number,
+    min: 0,
+    max: 6
+  },
+
+  activeFrom: {
+    type: Date,
+    required: true
+  },
+
+  activeTo: {
+    type: Date
   },
 
   createdAt: {

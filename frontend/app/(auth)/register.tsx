@@ -15,6 +15,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { UserRound } from 'lucide-react-native';
+import { getDisplayPhotoUri, saveProfilePhotoToDevice, shouldUnmirrorPhoto } from '@/src/utils/profile-photo';
 
 type RegisterForm = z.infer<typeof registerSchema>;
 
@@ -55,12 +56,14 @@ const Register = () => {
 
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ['images'],
+      cameraType: ImagePicker.CameraType.front,
       quality: 0.9,
       aspect: [1, 1],
     });
 
     if (!result.canceled && result.assets[0]?.uri) {
-      setPhotoUri(result.assets[0].uri);
+      const savedPhotoUri = await saveProfilePhotoToDevice(result.assets[0].uri, { frontCamera: true });
+      setPhotoUri(savedPhotoUri);
     }
   };
 
@@ -78,7 +81,8 @@ const Register = () => {
     });
 
     if (!result.canceled && result.assets[0]?.uri) {
-      setPhotoUri(result.assets[0].uri);
+      const savedPhotoUri = await saveProfilePhotoToDevice(result.assets[0].uri);
+      setPhotoUri(savedPhotoUri);
     }
   };
 
@@ -90,7 +94,8 @@ const Register = () => {
     });
 
     if (!result.canceled && result.assets[0]?.uri) {
-      setPhotoUri(result.assets[0].uri);
+      const savedPhotoUri = await saveProfilePhotoToDevice(result.assets[0].uri);
+      setPhotoUri(savedPhotoUri);
     }
   };
 
@@ -140,7 +145,11 @@ const Register = () => {
               <Pressable onPress={openPhotoOptions} style={styles.photoPressable}>
                 <View style={styles.photoCircle}>
                   {photoUri ? (
-                    <Image source={{ uri: photoUri }} style={styles.photoPreview} contentFit="cover" />
+                    <Image
+                      source={{ uri: getDisplayPhotoUri(photoUri) }}
+                      style={[styles.photoPreview, shouldUnmirrorPhoto(photoUri) ? styles.unmirroredPhoto : undefined]}
+                      contentFit="cover"
+                    />
                   ) : (
                     <UserRound size={100} color="#F0F0F0" strokeWidth={1} />
                   )}
@@ -276,6 +285,9 @@ const styles = StyleSheet.create({
   photoPreview: {
     width: '100%',
     height: '100%',
+  },
+  unmirroredPhoto: {
+    transform: [{ scaleX: -1 }],
   },
   photoRow: {
     flexDirection: 'row',

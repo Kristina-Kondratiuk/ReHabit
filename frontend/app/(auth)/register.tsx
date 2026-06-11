@@ -14,7 +14,7 @@ import { Colors } from '@/constants/theme';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
-import { Camera, CircleUserRound, UserRound } from 'lucide-react-native';
+import { UserRound } from 'lucide-react-native';
 
 type RegisterForm = z.infer<typeof registerSchema>;
 

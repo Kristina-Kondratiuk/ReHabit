@@ -1,11 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
-import { login, register, setAuthToken } from '@/src/services/auth';
+import { login, register, setAuthToken, updateProfilePhoto } from '@/src/services/auth';
 
 type User = {
+  id?: string;
   username?: string;
   email?: string;
+  photoUri?: string | null;
 };
 
 type Session = {
@@ -18,6 +20,7 @@ type AuthContextValue = {
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<User>;
   signUp: (username: string, email: string, password: string, photoUri?: string | null) => Promise<User>;
+  updatePhoto: (photoUri: string | null) => Promise<User>;
   signOut: () => void;
 };
 
@@ -62,8 +65,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const user: User = {
+      id: response?.user?.id,
       username: response?.user?.username,
       email: response?.user?.email || email,
+      photoUri: response?.user?.photoUri ?? null,
     };
 
     setAuthToken(token);
@@ -74,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (username: string, email: string, password: string, photoUri?: string | null) => {
-    const response = await register(username, email, password);
+    const response = await register(username, email, password, photoUri);
     const token = response?.token;
 
     if (!token) {
@@ -82,8 +87,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const user: User = {
+      id: response?.user?.id,
       username: response?.user?.username || username,
       email: response?.user?.email || email,
+      photoUri: response?.user?.photoUri ?? photoUri ?? null,
     };
 
     setAuthToken(token);
@@ -93,22 +100,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return user;
   };
 
+  const updatePhoto = async (photoUri: string | null) => {
+    const response = await updateProfilePhoto(photoUri);
+    const updatedUser: User = {
+      id: response?.user?._id || response?.user?.id || session?.user?.id,
+      username: response?.user?.username || session?.user?.username,
+      email: response?.user?.email || session?.user?.email,
+      photoUri: response?.user?.photoUri ?? null,
+    };
+
+    if (!session?.token) {
+      return updatedUser;
+    }
+
+    const nextSession: Session = {
+      token: session.token,
+      user: updatedUser,
+    };
+
+    setSession(nextSession);
+    await AsyncStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(nextSession));
+    return updatedUser;
+  };
+
   const signOut = () => {
     setAuthToken(null);
     setSession(null);
     void AsyncStorage.removeItem(SESSION_STORAGE_KEY);
   };
 
-  const value = useMemo<AuthContextValue>(
-    () => ({
-      session,
-      isLoading,
-      signIn,
-      signUp,
-      signOut,
-    }),
-    [isLoading, session]
-  );
+  const value: AuthContextValue = {
+    session,
+    isLoading,
+    signIn,
+    signUp,
+    updatePhoto,
+    signOut,
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

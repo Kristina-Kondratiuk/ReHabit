@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, useColorScheme, useWindowDimensions, View } from 'react-native';
-import { Bell, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 const habits = [
   { title: 'Pić wodę', color: 'blue' },
@@ -122,9 +123,6 @@ export default function CalendarScreen() {
         <ThemedText type="subtitle" style={styles.title}>
           Kalendarz
         </ThemedText>
-        <View style={[styles.bell, { backgroundColor: theme.background }]}>
-          <Bell color={Colors.common.tint} size={18}/>
-        </View>
       </View>
 
       <ScrollView
@@ -266,18 +264,6 @@ const styles = StyleSheet.create({
   },
   title: {
     color: Colors.common.tint,
-  },
-  bell: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: Colors.common.tint,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
-    elevation: 4,
   },
   habitScroller: {
     flexGrow: 0,

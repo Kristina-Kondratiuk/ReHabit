@@ -1,107 +1,395 @@
-import { Platform, StyleSheet } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, useColorScheme, useWindowDimensions, View } from 'react-native';
+import { Bell, ChevronLeft, ChevronRight } from 'lucide-react-native';
 
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+import { Colors } from '@/constants/theme';
 
-export default function TabTwoScreen() {
+const habits = [
+  { title: 'Pić wodę', color: 'blue' },
+  { title: 'Czytać książki', color: 'green' },
+  { title: 'Jeść śniadanie', color: 'yellow' },
+  { title: 'Ćwiczyć', color: 'purple' },
+] as const;
+
+const monthNames = [
+  'Styczeń',
+  'Luty',
+  'Marzec',
+  'Kwiecień',
+  'Maj',
+  'Czerwiec',
+  'Lipiec',
+  'Sierpień',
+  'Wrzesień',
+  'Październik',
+  'Listopad',
+  'Grudzień',
+];
+
+const weekdayLabels = ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb', 'Nd'];
+const doneColor = Colors.common.tint;
+const unfinishedColor = '#C99BFF';
+const calendarMaxWidth = 340;
+const calendarPadding = 12;
+const calendarBorderWidth = 1;
+const dayGap = 6;
+
+type CalendarDay = {
+  date: Date;
+  day: number;
+  inMonth: boolean;
+};
+
+const getDateKey = (date: Date) => {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
+
+const getMonthDays = (monthDate: Date): CalendarDay[] => {
+  const year = monthDate.getFullYear();
+  const month = monthDate.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const mondayBasedOffset = (firstDay.getDay() + 6) % 7;
+  const calendarStart = new Date(year, month, 1 - mondayBasedOffset);
+  const totalDays = Math.ceil((mondayBasedOffset + daysInMonth) / 7) * 7;
+
+  return Array.from({ length: totalDays }, (_, index) => {
+    const date = new Date(calendarStart);
+    date.setDate(calendarStart.getDate() + index);
+
+    return {
+      date,
+      day: date.getDate(),
+      inMonth: date.getMonth() === month,
+    };
+  });
+};
+
+export default function CalendarScreen() {
+  const { width } = useWindowDimensions();
+  const themeName = useColorScheme() ?? 'light';
+  const theme = Colors[themeName];
+  const [visibleMonth, setVisibleMonth] = useState(() => new Date());
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const [selectedHabitTitles, setSelectedHabitTitles] = useState<string[]>([]);
+  const calendarWidth = Math.min(Math.max(width - 40, 0), calendarMaxWidth);
+  const calendarContentWidth = calendarWidth - (calendarPadding + calendarBorderWidth) * 2;
+  const daySize = Math.floor((calendarContentWidth - dayGap * 6) / 7);
+
+  const days = useMemo(() => getMonthDays(visibleMonth), [visibleMonth]);
+  const selectedDateKey = getDateKey(selectedDate);
+  const doneDates = useMemo(
+    () =>
+      new Set([
+        getDateKey(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 13)),
+        getDateKey(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 16)),
+      ]),
+    [visibleMonth],
+  );
+  const unfinishedDates = useMemo(
+    () =>
+      new Set([
+        getDateKey(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 14)),
+        getDateKey(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 15)),
+      ]),
+    [visibleMonth],
+  );
+
+  const goToMonth = (direction: -1 | 1) => {
+    setVisibleMonth((currentMonth) => {
+      const nextMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + direction, 1);
+      return nextMonth;
+    });
+  };
+
+  const toggleHabitFilter = (title: string) => {
+    setSelectedHabitTitles((currentTitles) =>
+      currentTitles.includes(title)
+        ? currentTitles.filter((selectedTitle) => selectedTitle !== title)
+        : [...currentTitles, title]
+    );
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
+    <ThemedView style={styles.screen}>
+      <View style={styles.header}>
+        <ThemedText type="subtitle" style={styles.title}>
+          Kalendarz
         </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
+        <View style={[styles.bell, { backgroundColor: theme.background }]}>
+          <Bell color={Colors.common.tint} size={18}/>
+        </View>
+      </View>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.habitList}
+        style={styles.habitScroller}
+      >
+        {habits.map((habit) => {
+          const isHabitSelected = selectedHabitTitles.includes(habit.title);
+          const activeHabitColor = Colors.common[habit.color];
+
+          return (
+            <Pressable
+              key={habit.title}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: isHabitSelected }}
+              onPress={() => toggleHabitFilter(habit.title)}
+              style={[
+                styles.habitChip,
+                {
+                  backgroundColor: Colors[themeName][habit.color],
+                  borderColor: isHabitSelected ? activeHabitColor : 'transparent',
+                  shadowColor: activeHabitColor,
+                  shadowOpacity: isHabitSelected && themeName === 'dark' ? 1 : 0,
+                  elevation: isHabitSelected && themeName === 'dark' ? 4 : 0,
+                },
+              ]}
+            >
+              <Text style={[styles.habitText, { color: theme.text }]} numberOfLines={1}>
+                {habit.title}
+              </Text>
+            </Pressable>
+          );
         })}
-      </Collapsible>
-    </ParallaxScrollView>
+      </ScrollView>
+
+      <View style={styles.monthHeader}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => goToMonth(-1)}
+          style={styles.monthArrow}
+        >
+          <ChevronLeft color={Colors.common.white} size={20} strokeWidth={2.5} />
+        </Pressable>
+        <ThemedText type="defaultSemiBold" style={styles.monthTitle}>
+          {monthNames[visibleMonth.getMonth()]} {visibleMonth.getFullYear()}
+        </ThemedText>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => goToMonth(1)}
+          style={styles.monthArrow}
+        >
+          <ChevronRight color={Colors.common.white} size={20} strokeWidth={2.5} />
+        </Pressable>
+      </View>
+
+      <View
+        style={[
+          styles.calendarWrap,
+          { width: calendarWidth, borderColor: themeName === 'dark' ? '#232323' : '#EDEDED' },
+        ]}
+      >
+        <View style={styles.weekdays}>
+          {weekdayLabels.map((weekday) => (
+            <Text key={weekday} style={[styles.weekday, { color: theme.descr }]}>
+              {weekday}
+            </Text>
+          ))}
+        </View>
+
+        <View style={styles.daysGrid}>
+          {days.map((calendarDay) => {
+            const dateKey = getDateKey(calendarDay.date);
+            const isSelected = dateKey === selectedDateKey;
+            const isDone = doneDates.has(dateKey);
+            const isUnfinished = unfinishedDates.has(dateKey);
+            const dayBackgroundColor = isDone
+              ? doneColor
+              : isUnfinished
+                ? unfinishedColor
+                : theme.background;
+            const dayTextColor =
+              isDone || isUnfinished ? Colors.common.white : calendarDay.inMonth ? theme.text : theme.descr;
+
+            return (
+              <Pressable
+                key={dateKey}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isSelected }}
+                onPress={() => setSelectedDate(calendarDay.date)}
+                style={[
+                  styles.dayCell,
+                  {
+                    width: daySize,
+                    height: daySize,
+                    backgroundColor: dayBackgroundColor,
+                    borderColor: isSelected ? Colors.common.tint : themeName === 'dark' ? '#2A2A2A' : '#EFEFEF',
+                    opacity: calendarDay.inMonth ? 1 : 0.45,
+                  },
+                ]}
+              >
+                <Text style={[styles.dayText, { color: dayTextColor }]}>{calendarDay.day}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
+      <View style={styles.legend}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: doneColor }]} />
+          <ThemedText style={styles.legendText}>Wykonane</ThemedText>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: unfinishedColor }]} />
+          <ThemedText style={styles.legendText}>Niezakończone</ThemedText>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendEmptyDot, { borderColor: theme.descr }]} />
+          <ThemedText style={styles.legendText}>Niewykonane</ThemedText>
+        </View>
+      </View>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  screen: {
+    flex: 1,
+    paddingTop: 20,
+    paddingHorizontal: 20,
   },
-  titleContainer: {
+  header: {
     flexDirection: 'row',
-    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 28,
+  },
+  title: {
+    color: Colors.common.tint,
+  },
+  bell: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: Colors.common.tint,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  habitScroller: {
+    flexGrow: 0,
+    paddingVertical: 6,
+    marginHorizontal: -20,
+    marginBottom: 40,
+  },
+  habitList: {
+    gap: 12,
+    paddingHorizontal: 20,
+  },
+  habitChip: {
+    height: 34,
+    minWidth: 92,
+    maxWidth: 150,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 18,
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 4,
+  },
+  habitText: {
+    fontFamily: 'Inter',
+    fontSize: 12,
+    lineHeight: 14,
+    fontWeight: '500',
+  },
+  monthHeader: {
+    width: '100%',
+    maxWidth: 340,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  monthArrow: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.common.tint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  monthTitle: {
+    textAlign: 'center',
+    fontSize: 14,
+    lineHeight: 16,
+  },
+  calendarWrap: {
+    alignSelf: 'center',
+    borderWidth: calendarBorderWidth,
+    borderRadius: 12,
+    padding: calendarPadding,
+  },
+  weekdays: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  weekday: {
+    flex: 1,
+    textAlign: 'center',
+    fontFamily: 'Inter',
+    fontSize: 10,
+    lineHeight: 12,
+    fontWeight: '500',
+  },
+  daysGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  dayCell: {
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayText: {
+    fontFamily: 'Inter',
+    fontSize: 13,
+    lineHeight: 15,
+    fontWeight: '500',
+  },
+  legend: {
+    width: '100%',
+    maxWidth: 340,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  legendEmptyDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 1,
+  },
+  legendText: {
+    fontSize: 9,
+    lineHeight: 10,
   },
 });

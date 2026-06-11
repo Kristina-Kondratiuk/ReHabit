@@ -65,3 +65,16 @@ export const updateProfilePhoto = async (photoUri) => {
     throw new Error(extractErrorMessage(error));
   }
 };
+
+/**
+ * @param {{ username?: string; email?: string }} profile
+ */
+export const updateProfile = async (profile) => {
+  try {
+    const res = await API.patch("/auth/me", profile);
+
+    return res.data;
+  } catch (error) {
+    throw new Error(extractErrorMessage(error));
+  }
+};

@@ -1,33 +1,29 @@
-import { StyleSheet, useColorScheme, View } from "react-native";
+import { StyleSheet } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
-import { Bell, Droplet, Dumbbell, Salad } from "lucide-react-native";
+import { Droplet, Dumbbell, Salad } from "lucide-react-native";
 import { Colors } from "@/constants/theme";
 import HabitToday from "@/components/habit-comp";
 import { ThemedView } from "@/components/themed-view";
 import { HorizontalCalendar } from "@/components/ui/horizontal-calendar";
+import { useUserStore } from "@/src/store/user-store";
 
 
 export default function HomeScreen() {
   
-  const themeName = useColorScheme() ?? 'light';
-  const theme = Colors[themeName];
-  const themeBackground = theme.background
+  const user = useUserStore((state) => state.user);
+  const greetingName = user?.username || user?.email?.split('@')[0];
 
   return (
     <ThemedView style={styles.mainContainer}>
-      <View style={styles.headerText}>
-        <ThemedText type="subtitle">
-          Cześć, Kamila!
+        <ThemedText type="subtitle" style={styles.headerText}>
+          {greetingName ? `Cześć, ${greetingName}!` : 'Cześć!'}
         </ThemedText>
-        <View style={[styles.bell, {backgroundColor: themeBackground}]}><Bell color={Colors.common.tint} size={18}/></View>
-      </View>
       <HorizontalCalendar />
       <ThemedText type="defaultSemiBold"> Zadania na dziś</ThemedText>
       <HabitToday title="Jeść sniadanie" description="Chcę regularnie jeść śniadanie, aby mieć więcej energii rano i lepiej zaczynać dzień" icon={ <Salad size={28} strokeWidth={1.5} />} color="green"/>
       <HabitToday title="Pić wodę" description="Chcę regularnie jeść śniadanie, aby mieć więcej energii rano i lepiej zaczynać dzień" icon={ <Droplet size={28} strokeWidth={1.5}/>} color="blue"/>
       <HabitToday title="Ćwiczyć" description="Chcę regularnie jeść śniadanie, aby mieć więcej energii rano i lepiej zaczynać dzień" icon={<Dumbbell size={28} strokeWidth={1.5}/>} />
-
     </ThemedView>
   );
 }

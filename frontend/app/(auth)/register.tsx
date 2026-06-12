@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ActionSheetIOS, Alert, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { ActionSheetIOS, Alert, Keyboard, Platform, Pressable, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Link } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -130,18 +131,16 @@ const Register = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={-100}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}>
-          <ThemedView style={styles.cont}>
-            <ThemedText type="title" style={{ marginBottom: 40, color: Colors.common.tint }}>Rejestracja</ThemedText>
-            <View style={styles.formContainer}>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <KeyboardAwareScrollView
+        contentContainerStyle={styles.scrollContent}
+        enableOnAndroid
+        extraScrollHeight={30}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}>
+        <ThemedView style={styles.cont}>
+          <ThemedText type="title" style={{ marginBottom: 40, color: Colors.common.tint }}>Rejestracja</ThemedText>
+          <View style={styles.formContainer}>
               <Pressable onPress={openPhotoOptions} style={styles.photoPressable}>
                 <View style={styles.photoCircle}>
                   {photoUri ? (
@@ -243,11 +242,10 @@ const Register = () => {
                 Masz już konto? <Link href={'/(auth)/login'} style={styles.link}>Zaloguj się</Link>
               </ThemedText>
 
-            </View>
-          </ThemedView>
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+          </View>
+        </ThemedView>
+      </KeyboardAwareScrollView>
+    </TouchableWithoutFeedback>
   );
 };
 

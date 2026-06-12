@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Keyboard, Pressable, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import {
@@ -151,27 +151,31 @@ export default function Profile() {
   if (activeView === 'settings') {
     return (
       <ProfileShell>
-        <BackHeader title="Ustawienia profilu" onBack={() => setActiveView('main')} />
-        <Avatar editable uri={currentPhotoUri} onEditPhoto={openPhotoOptions} />
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <View style={styles.keyboardDismissArea}>
+            <BackHeader title="Ustawienia profilu" onBack={() => setActiveView('main')} />
+            <Avatar editable uri={currentPhotoUri} onEditPhoto={openPhotoOptions} />
 
-        <View style={styles.goalEditPill}>
-          <ThemedText style={styles.goalText}>{goalText}</ThemedText>
-          <Pencil color={Colors.common.tint} size={16} strokeWidth={1.7} />
-        </View>
+            <View style={styles.goalEditPill}>
+              <ThemedText style={styles.goalText}>{goalText}</ThemedText>
+              <Pencil color={Colors.common.tint} size={16} strokeWidth={1.7} />
+            </View>
 
-        <View style={styles.form}>
-          <ProfileInput label="Imię" value={firstName} onChangeText={setFirstName} />
-          <ProfileInput label="Nazwisko" value={lastName} onChangeText={setLastName} />
-        </View>
+            <View style={styles.form}>
+              <ProfileInput label="Imię" value={firstName} onChangeText={setFirstName} />
+              <ProfileInput label="Nazwisko" value={lastName} onChangeText={setLastName} />
+            </View>
 
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => void handleSaveProfile()}
-          style={[styles.primaryButton, isSavingProfile ? styles.primaryButtonDisabled : undefined]}
-          disabled={isSavingProfile}
-        >
-          <Text style={styles.primaryButtonText}>{isSavingProfile ? 'Zapisywanie...' : 'Zapisz zmiany'}</Text>
-        </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => void handleSaveProfile()}
+              style={[styles.primaryButton, isSavingProfile ? styles.primaryButtonDisabled : undefined]}
+              disabled={isSavingProfile}
+            >
+              <Text style={styles.primaryButtonText}>{isSavingProfile ? 'Zapisywanie...' : 'Zapisz zmiany'}</Text>
+            </Pressable>
+          </View>
+        </TouchableWithoutFeedback>
       </ProfileShell>
     );
   }
@@ -469,6 +473,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 14,
     paddingLeft: 8,
+  },
+  keyboardDismissArea: {
+    flex: 1,
   },
   mainHeader: {
     flexDirection: 'row',

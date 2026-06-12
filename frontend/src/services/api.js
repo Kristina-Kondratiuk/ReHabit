@@ -1,6 +1,6 @@
-import axios from "axios";
+import { create } from "axios";
 
-const API = axios.create({
+const API = create({
   baseURL: "https://rehabit-jdci.onrender.com/"
 });
 

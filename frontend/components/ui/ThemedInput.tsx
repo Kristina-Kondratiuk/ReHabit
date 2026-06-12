@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { Colors } from '../../constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export type ThemedInputProps = {
   lightColor?: string;
@@ -23,13 +24,16 @@ const ThemedInput = ({
   darkColor,
   type = 'text',
   placeholder,
+  placeholderTextColor,
   onFocus,
   onBlur,
   style,
   ...rest
 }: ThemedInputProps) => {
   const focusAnim = useRef(new Animated.Value(0)).current;
+  const themeName = useColorScheme() ?? 'light';
   const textColor = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
+  const inputPlaceholderColor = placeholderTextColor ?? (themeName === 'dark' ? Colors.dark.descr : undefined);
 
   const animateFocus = (toValue: 0 | 1) => {
     Animated.timing(focusAnim, {
@@ -62,6 +66,7 @@ const ThemedInput = ({
       onBlur={handleBlur}
       underlineColorAndroid="transparent"
       placeholder={placeholder}
+      placeholderTextColor={inputPlaceholderColor}
       keyboardType={type === 'email' ? 'email-address' : 'default'}
       secureTextEntry={type === 'password' || type === 'confirmPassword'}
       {...rest}

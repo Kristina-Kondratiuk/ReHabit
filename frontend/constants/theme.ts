@@ -43,6 +43,7 @@ const themedColors = {
   dark: {
     text: commonColors.textDark,
     background: commonColors.black,
+    grey: '#121212',
     descr: '#9BA1A6',
     icon: commonColors.icon,
     yellow: '#2B2610',

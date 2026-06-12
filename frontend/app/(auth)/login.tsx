@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { Keyboard, Platform, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Link } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -40,18 +41,16 @@ export default function Login() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={-100}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}>
-          <ThemedView style={styles.cont}>
-            <ThemedText type="title" style={{ marginBottom: 40, color: Colors.common.tint }}>Logowanie</ThemedText>
-            <View style={styles.formContainer}>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <KeyboardAwareScrollView
+        contentContainerStyle={styles.scrollContent}
+        enableOnAndroid
+        extraScrollHeight={30}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}>
+        <ThemedView style={styles.cont}>
+          <ThemedText type="title" style={{ marginBottom: 40, color: Colors.common.tint }}>Logowanie</ThemedText>
+          <View style={styles.formContainer}>
 
               <View style={styles.inputCont}>
                 <Controller
@@ -98,11 +97,10 @@ export default function Login() {
                 Nie masz konta? <Link href={'/(auth)/register'} style={styles.link}>Zarejestruj się</Link>
               </ThemedText>
 
-            </View>
-          </ThemedView>
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+          </View>
+        </ThemedView>
+      </KeyboardAwareScrollView>
+    </TouchableWithoutFeedback>
   );
 }
 
@@ -111,7 +109,7 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   formContainer: {
-    gap: 24,
+    gap: 16,
     width: '100%',
     alignItems: 'center',
   },

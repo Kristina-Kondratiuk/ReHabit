@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { ArrowLeft, ChevronDown } from 'lucide-react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Calendar, type DateData } from 'react-native-calendars';
@@ -161,7 +162,13 @@ export default function AddHabitCreateScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <KeyboardAwareScrollView
+        contentContainerStyle={styles.scroll}
+        enableOnAndroid
+        extraScrollHeight={30}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <Pressable style={styles.back} onPress={() => router.back()}>
           <ArrowLeft color={Colors.common.tint} size={30} strokeWidth={1.8} />
         </Pressable>
@@ -216,7 +223,7 @@ export default function AddHabitCreateScreen() {
 
           <ThemedButton title="Dodać" onPress={handleSubmit} height={52} />
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       <BottomSheetModal
         visible={isDatePickerOpen}

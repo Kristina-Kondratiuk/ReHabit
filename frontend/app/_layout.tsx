@@ -1,13 +1,14 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
 
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider } from '@/src/context/auth-context';
+import { useThemeStore } from '@/src/store/theme-store';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -23,8 +24,14 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
+  const restoreThemePreference = useThemeStore((state) => state.restoreThemePreference);
   const isDark = colorScheme === 'dark';
   const appBackground = isDark ? Colors.dark.background : Colors.light.background;
+
+  useEffect(() => {
+    void restoreThemePreference();
+  }, [restoreThemePreference]);
+
   const activeTheme = useMemo(
     () => ({
       ...(isDark ? DarkTheme : DefaultTheme),

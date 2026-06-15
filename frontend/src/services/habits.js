@@ -5,6 +5,11 @@ export const getHabits = async () => {
   return res.data;
 };
 
+export const getTodayHabits = async () => {
+  const res = await API.get("/habits/today");
+  return res.data;
+};
+
 export const createHabit = async (habit) => {
   const res = await API.post("/habits", habit);
   return res.data;

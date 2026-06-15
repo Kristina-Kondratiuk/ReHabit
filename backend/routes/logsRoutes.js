@@ -6,10 +6,29 @@ import Habit from "../models/Habit.js";
 
 const router = express.Router();
 
+const parseDateOnly = (value) => {
+    if (typeof value !== "string") {
+        return null;
+    }
+
+    const [year, month, day] = value.split("-").map(Number);
+
+    if (!year || !month || !day) {
+        return null;
+    }
+
+    return new Date(Date.UTC(year, month - 1, day));
+};
+
 const getRequestDate = (value) => {
-    const date = value ? new Date(`${value}T00:00:00`) : new Date();
-    date.setHours(0, 0, 0, 0);
-    return date;
+    const selectedDate = parseDateOnly(value);
+
+    if (selectedDate) {
+        return selectedDate;
+    }
+
+    const today = new Date();
+    return new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
 };
 
 // GET /logs?month=2026-05
@@ -21,9 +40,14 @@ router.get("/", authMiddleware, async (req, res) => {
             return res.status(400).json({ message: "Month is required" });
         }
 
-        const start = new Date(`${month}-01`);
+        const start = parseDateOnly(`${month}-01`);
+
+        if (!start) {
+            return res.status(400).json({ message: "Invalid month" });
+        }
+
         const end = new Date(start);
-        end.setMonth(end.getMonth() + 1)
+        end.setUTCMonth(end.getUTCMonth() + 1)
 
         const logs = await HabitLog.find ({
             userId: req.user.userId,

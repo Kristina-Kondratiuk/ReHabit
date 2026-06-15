@@ -12,7 +12,7 @@ import { ThemedButton } from '@/components/ui/ThemedButton';
 import BottomSheetModal from '@/components/ui/bottom-sheet-modal';
 import { HabitColorPicker } from '@/components/ui/habit-color-picker';
 import { HabitIconPicker, type HabitIconOption } from '@/components/ui/habit-icon-picker';
-import { Colors, type HabitColorName } from '@/constants/theme';
+import { Colors, habitColorNames, type HabitColorName } from '@/constants/theme';
 import {
   habitIconLabelMap,
   habitIconMap,
@@ -20,6 +20,87 @@ import {
   type HabitIconName,
 } from '@/constants/habit-presets';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { createHabit, updateHabit } from '@/src/services/habits';
+
+type HabitType = 'build' | 'quit';
+type HabitFrequency = 'daily' | 'weekly' | 'custom';
+
+const frequencyLabels: Record<HabitFrequency, string> = {
+  daily: 'Codziennie',
+  weekly: 'Raz w tygodniu',
+  custom: 'Wybrane dni',
+};
+
+const weekdayOptions = [
+  { label: 'Nd', value: 0 },
+  { label: 'Pn', value: 1 },
+  { label: 'Wt', value: 2 },
+  { label: 'Śr', value: 3 },
+  { label: 'Cz', value: 4 },
+  { label: 'Pt', value: 5 },
+  { label: 'Sb', value: 6 },
+] as const;
+
+type AddHabitParams = {
+  presetId?: string;
+  habitId?: string;
+  title?: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+  type?: string;
+  frequency?: string;
+  daysOfTheWeek?: string;
+  weeklyDay?: string;
+  activeFrom?: string;
+  activeTo?: string;
+};
+
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return 'Nie udało się dodać nawyku.';
+};
+
+const isHabitIconName = (icon: string | undefined): icon is HabitIconName => {
+  return Boolean(icon && icon in habitIconMap);
+};
+
+const isHabitColorName = (color: string | undefined): color is HabitColorName => {
+  return Boolean(color && habitColorNames.includes(color as HabitColorName));
+};
+
+const isHabitType = (value: string | undefined): value is HabitType => {
+  return value === 'build' || value === 'quit';
+};
+
+const isHabitFrequency = (value: string | undefined): value is HabitFrequency => {
+  return value === 'daily' || value === 'weekly' || value === 'custom';
+};
+
+const normalizeDateParam = (value: string | undefined) => {
+  return value ? value.split('T')[0] : null;
+};
+
+const parseDaysOfTheWeek = (value: string | undefined) => {
+  if (!value) {
+    return [];
+  }
+
+  try {
+    const parsedValue = JSON.parse(value);
+
+    if (!Array.isArray(parsedValue)) {
+      return [];
+    }
+
+    return parsedValue.filter((day): day is number => typeof day === 'number' && day >= 0 && day <= 6);
+  } catch {
+    return [];
+  }
+};
 
 const parseDateString = (value: string) => {
   const [year, month, day] = value.split('-').map(Number);
@@ -68,23 +149,59 @@ const buildMarkedRange = (start: string | null, end: string | null, themeName: '
 };
 
 export default function AddHabitCreateScreen() {
-  const { presetId } = useLocalSearchParams<{ presetId?: string }>();
+  const {
+    presetId,
+    habitId,
+    title: habitTitle,
+    description: habitDescription,
+    icon: habitIcon,
+    color: habitColor,
+    type: habitTypeParam,
+    frequency: habitFrequency,
+    daysOfTheWeek,
+    weeklyDay,
+    activeFrom,
+    activeTo,
+  } = useLocalSearchParams<AddHabitParams>();
   const preset = useMemo(() => presetHabits.find((item) => item.id === presetId), [presetId]);
   const themeName = useColorScheme() ?? 'light';
   const theme = Colors[themeName];
+  const isEditing = Boolean(habitId);
+  const parsedDaysOfTheWeek = parseDaysOfTheWeek(daysOfTheWeek);
+  const parsedWeeklyDay = weeklyDay ? Number(weeklyDay) : undefined;
+  const initialFrequency = isHabitFrequency(habitFrequency) ? habitFrequency : 'daily';
+  const initialWeekDays =
+    initialFrequency === 'custom' && parsedDaysOfTheWeek.length > 0
+      ? parsedDaysOfTheWeek
+      : initialFrequency === 'weekly' && parsedWeeklyDay !== undefined && parsedWeeklyDay >= 0 && parsedWeeklyDay <= 6
+        ? [parsedWeeklyDay]
+        : [new Date().getDay()];
 
-  const [selectedColor, setSelectedColor] = useState<HabitColorName>('blue');
-  const [selectedIcon, setSelectedIcon] = useState<HabitIconName>(preset?.icon ?? 'droplet');
-  const [title, setTitle] = useState(preset?.title ?? '');
-  const [description, setDescription] = useState(preset?.description ?? '');
+  const [selectedColor, setSelectedColor] = useState<HabitColorName>(
+    isHabitColorName(habitColor) ? habitColor : 'blue'
+  );
+  const [selectedIcon, setSelectedIcon] = useState<HabitIconName>(
+    isHabitIconName(habitIcon) ? habitIcon : preset?.icon ?? 'droplet'
+  );
+  const [title, setTitle] = useState(habitTitle ?? preset?.title ?? '');
+  const [description, setDescription] = useState(habitDescription ?? preset?.description ?? '');
+  const [habitType, setHabitType] = useState<HabitType>(
+    isHabitType(habitTypeParam)
+      ? habitTypeParam
+      : preset?.id === 'alcohol-free' || preset?.id === 'smoking'
+        ? 'quit'
+        : 'build'
+  );
+  const [frequency, setFrequency] = useState<HabitFrequency>(initialFrequency);
+  const [selectedWeekDays, setSelectedWeekDays] = useState<number[]>(initialWeekDays);
+  const [isFrequencyPickerOpen, setIsFrequencyPickerOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const [isIndefinite, setIsIndefinite] = useState(false);
-  const [startDate, setStartDate] = useState<string | null>(null);
-  const [endDate, setEndDate] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState<string | null>(normalizeDateParam(activeFrom));
+  const [endDate, setEndDate] = useState<string | null>(normalizeDateParam(activeTo));
   const [draftStartDate, setDraftStartDate] = useState<string | null>(null);
   const [draftEndDate, setDraftEndDate] = useState<string | null>(null);
-  const [isDraftIndefinite, setIsDraftIndefinite] = useState(false);
 
   const iconOptions: HabitIconOption[] = (Object.keys(habitIconLabelMap) as HabitIconName[]).map((id) => ({
     id,
@@ -94,21 +211,65 @@ export default function AddHabitCreateScreen() {
 
   const markedDates = useMemo(() => buildMarkedRange(draftStartDate, draftEndDate, themeName), [draftEndDate, draftStartDate, themeName]);
   const isRangeSelected = Boolean(draftStartDate && draftEndDate);
-  const isConfirmDisabled = !isRangeSelected && !isDraftIndefinite;
+  const isConfirmDisabled = !isRangeSelected;
 
-  const handleSubmit = () => {
-    Alert.alert('Info', 'Coming soon...');
+  const handleSubmit = async () => {
+    const normalizedTitle = title.trim();
+    const normalizedDescription = description.trim();
+    const activeFrom = startDate;
+
+    if (!normalizedTitle) {
+      Alert.alert('Brak nazwy', 'Wpisz nazwę nawyku.');
+      return;
+    }
+
+    if (!activeFrom) {
+      Alert.alert('Brak zakresu dat', 'Wybierz zakres dat.');
+      return;
+    }
+
+    if (frequency === 'custom' && selectedWeekDays.length === 0) {
+      Alert.alert('Brak dni', 'Wybierz dni tygodnia dla tego nawyku.');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const habitPayload = {
+        title: normalizedTitle,
+        description: normalizedDescription,
+        icon: selectedIcon,
+        color: selectedColor,
+        type: habitType,
+        frequency,
+        daysOfTheWeek: frequency === 'custom' ? [...selectedWeekDays].sort((a, b) => a - b) : [],
+        weeklyDay: frequency === 'weekly' ? selectedWeekDays[0] : undefined,
+        activeFrom,
+        activeTo: endDate,
+      };
+
+      if (isEditing && habitId) {
+        await updateHabit(habitId, habitPayload);
+        router.replace('/(tabs)');
+      } else {
+        await createHabit(habitPayload);
+        router.replace('/(tabs)/addHabit');
+      }
+    } catch (error) {
+      Alert.alert('Błąd', getErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const openDateRangePicker = () => {
     setDraftStartDate(startDate);
     setDraftEndDate(endDate);
-    setIsDraftIndefinite(isIndefinite);
     setIsDatePickerOpen(true);
   };
 
   const handleRangeDayPress = (day: DateData) => {
-    setIsDraftIndefinite(false);
     const pickedDate = day.dateString;
 
     if (!draftStartDate || (draftStartDate && draftEndDate)) {
@@ -127,38 +288,40 @@ export default function AddHabitCreateScreen() {
   };
 
   const confirmDateRange = () => {
-    if (isDraftIndefinite) {
-      setIsIndefinite(true);
-      setStartDate(null);
-      setEndDate(null);
-      setIsDatePickerOpen(false);
-      return;
-    }
-
     if (!draftStartDate) {
       setIsDatePickerOpen(false);
       return;
     }
 
-    setIsIndefinite(false);
     setStartDate(draftStartDate);
     setEndDate(draftEndDate ?? draftStartDate);
     setIsDatePickerOpen(false);
   };
 
-  const toggleIndefinite = () => {
-    setIsDraftIndefinite((prev) => !prev);
-    setDraftStartDate(null);
-    setDraftEndDate(null);
+  const handleSelectFrequency = (nextFrequency: HabitFrequency) => {
+    setFrequency(nextFrequency);
+    setIsFrequencyPickerOpen(false);
+  };
+
+  const handleSelectWeekday = (day: number) => {
+    if (frequency === 'weekly') {
+      setSelectedWeekDays([day]);
+      return;
+    }
+
+    setSelectedWeekDays((currentDays) =>
+      currentDays.includes(day)
+        ? currentDays.filter((currentDay) => currentDay !== day)
+        : [...currentDays, day].sort((a, b) => a - b)
+    );
   };
 
   const rangeFieldLabel =
-    isIndefinite
-      ? 'Bezterminowo'
-      : startDate && endDate
-        ? `Od: ${formatUiDate(startDate)}    Do: ${formatUiDate(endDate)}`
-        : 'Wybierz zakres dat';
-  const isRangePicked = isIndefinite || Boolean(startDate && endDate);
+    startDate && endDate
+      ? `Od: ${formatUiDate(startDate)}    Do: ${formatUiDate(endDate)}`
+      : 'Wybierz zakres dat';
+  const isRangePicked = Boolean(startDate && endDate);
+  const shouldShowWeekdayPicker = frequency === 'weekly' || frequency === 'custom';
 
   return (
     <ThemedView style={styles.container}>
@@ -174,7 +337,7 @@ export default function AddHabitCreateScreen() {
         </Pressable>
 
         <ThemedText style={styles.titleText} type="subtitle">
-          Dodaj nowy nawyk
+          {isEditing ? 'Edytuj nawyk' : 'Dodaj nowy nawyk'}
         </ThemedText>
 
         <View style={styles.formSection}>
@@ -204,24 +367,75 @@ export default function AddHabitCreateScreen() {
             <Pressable style={styles.rangeButton} onPress={openDateRangePicker}>
               <ThemedText
                 type="defaultSemiBold"
-                style={{ fontSize: 15, fontWeight: 500, color: isRangePicked ? Colors.common.black : theme.icon }}
+                style={{ color: isRangePicked ? theme.text : theme.icon }}
               >
                 {rangeFieldLabel}
               </ThemedText>
             </Pressable>
           </View>
 
-          <Pressable style={styles.dropdownLike}>
-            <ThemedText>Okresowość</ThemedText>
+          <Pressable style={styles.dropdownLike} onPress={() => setIsFrequencyPickerOpen(true)}>
+            <ThemedText type="defaultSemiBold">{frequencyLabels[frequency]}</ThemedText>
             <ChevronDown color={theme.descr} size={18} />
           </Pressable>
 
+          {shouldShowWeekdayPicker ? (
+            <View style={styles.weekdaySection}>
+              <ThemedText type="defaultSemiBold">
+                {frequency === 'weekly' ? 'Dzień tygodnia' : 'Dni tygodnia'}
+              </ThemedText>
+              <View style={styles.weekdayRow}>
+                {weekdayOptions.map((day) => {
+                  const isSelected = selectedWeekDays.includes(day.value);
+
+                  return (
+                    <Pressable
+                      key={day.value}
+                      style={[
+                        styles.weekdayChip,
+                        { borderColor: isSelected ? Colors.common.tint : Colors.common.inputBorder },
+                        isSelected ? { backgroundColor: theme.purple } : null,
+                      ]}
+                      onPress={() => handleSelectWeekday(day.value)}
+                    >
+                      <ThemedText
+                        type="defaultSemiBold"
+                        style={[styles.weekdayText, { color: isSelected ? Colors.common.tint : theme.text }]}
+                      >
+                        {day.label}
+                      </ThemedText>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          ) : null}
+
           <View style={styles.typeRow}>
-            <ThemedButton title="Nabywam" variant="choice" tone="green" width={'48%'} selected />
-            <ThemedButton title="Pozbywam się" variant="choice" tone="red" width={'48%'} />
+            <ThemedButton
+              title="Nabywam"
+              variant="choice"
+              tone="green"
+              width={'48%'}
+              selected={habitType === 'build'}
+              onPress={() => setHabitType('build')}
+            />
+            <ThemedButton
+              title="Pozbywam się"
+              variant="choice"
+              tone="red"
+              width={'48%'}
+              selected={habitType === 'quit'}
+              onPress={() => setHabitType('quit')}
+            />
           </View>
 
-          <ThemedButton title="Dodać" onPress={handleSubmit} height={52} />
+          <ThemedButton
+            title={isSubmitting ? (isEditing ? 'Zapisywanie...' : 'Dodawanie...') : isEditing ? 'Zapisać' : 'Dodać'}
+            onPress={handleSubmit}
+            height={52}
+            disabled={isSubmitting}
+          />
         </View>
       </KeyboardAwareScrollView>
 
@@ -229,9 +443,6 @@ export default function AddHabitCreateScreen() {
         visible={isDatePickerOpen}
         title="Wybierz zakres dat"
         onClose={() => setIsDatePickerOpen(false)}
-        rightActionLabel="Bezterminowo"
-        onRightActionPress={toggleIndefinite}
-        isRightActionActive={isDraftIndefinite}
       >
           <View style={styles.calendarWrap}>
             <Calendar
@@ -257,6 +468,32 @@ export default function AddHabitCreateScreen() {
           </View>
 
         <ThemedButton title="Potwierdź zakres" onPress={confirmDateRange} height={52} disabled={isConfirmDisabled} />
+      </BottomSheetModal>
+
+      <BottomSheetModal
+        visible={isFrequencyPickerOpen}
+        title="Okresowość"
+        onClose={() => setIsFrequencyPickerOpen(false)}
+      >
+        {(Object.keys(frequencyLabels) as HabitFrequency[]).map((option) => {
+          const isSelected = frequency === option;
+
+          return (
+            <Pressable
+              key={option}
+              style={[
+                styles.frequencyOption,
+                {
+                  borderColor: isSelected ? Colors.common.tint : Colors.common.inputBorder,
+                  backgroundColor: isSelected ? theme.purple : 'transparent',
+                },
+              ]}
+              onPress={() => handleSelectFrequency(option)}
+            >
+              <ThemedText type="defaultSemiBold">{frequencyLabels[option]}</ThemedText>
+            </Pressable>
+          );
+        })}
       </BottomSheetModal>
     </ThemedView>
   );
@@ -306,6 +543,13 @@ const styles = StyleSheet.create({
   formSection: {
     gap: 16,
   },
+  frequencyOption: {
+    minHeight: 52,
+    borderWidth: 1,
+    borderRadius: 11,
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+  },
   rangeButton: {
     borderWidth: 2,
     borderColor: '#CFCFCF',
@@ -327,5 +571,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 8,
+  },
+  weekdayChip: {
+    width: 40,
+    height: 40,
+    borderWidth: 1,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  weekdayRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  weekdaySection: {
+    gap: 10,
+  },
+  weekdayText: {
+    fontSize: 14,
+    lineHeight: 18,
   },
 });

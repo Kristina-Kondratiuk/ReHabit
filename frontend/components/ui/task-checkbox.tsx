@@ -1,17 +1,21 @@
-import React, { useState} from 'react'
 import ExpoCheckbox from 'expo-checkbox';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import { Colors } from '@/constants/theme';
 
-export default function TaskCheckbox() {
-    const [checked, setChecked] = useState(false);
+type TaskCheckboxProps = {
+    checked: boolean;
+    disabled?: boolean;
+    onChange: (checked: boolean) => void;
+};
 
+export default function TaskCheckbox({ checked, disabled = false, onChange }: TaskCheckboxProps) {
     return (
-        <TouchableOpacity>
+        <TouchableOpacity disabled={disabled}>
             <ExpoCheckbox
                 hitSlop={40}
                 value={checked}
-                onValueChange={setChecked}
+                disabled={disabled}
+                onValueChange={onChange}
                 color={checked ? Colors.common.success : undefined}
                 style={s.checkbox} />
         </TouchableOpacity>

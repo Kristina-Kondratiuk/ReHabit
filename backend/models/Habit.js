@@ -16,6 +16,18 @@ const habitSchema = new Schema({
     type: String
   },
 
+  icon: {
+    type: String,
+    enum: ["droplet", "dumbbell", "book-open", "wine-off", "cigarette-off", "graduation-cap", "utensils", "sport-shoe"],
+    default: "droplet"
+  },
+
+  color: {
+    type: String,
+    enum: ["yellow", "green", "blue", "purple"],
+    default: "blue"
+  },
+
   type: {
     type: String,
     enum: ["build", "quit"],

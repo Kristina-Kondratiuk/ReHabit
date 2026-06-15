@@ -21,7 +21,7 @@ router.get("/", authMiddleware, async (req, res) => {
 //POST /habits
 router.post("/", authMiddleware, async (req, res) => {
     try {
-        const { title, description, type, frequency, daysOfTheWeek, weeklyDay, activeFrom, activeTo } = req.body;
+        const { title, description, icon, color, type, frequency, daysOfTheWeek, weeklyDay, activeFrom, activeTo } = req.body;
 
         if (!title || !type) {
             return res.status(400).json({ message: "Title and type are required." });
@@ -31,6 +31,8 @@ router.post("/", authMiddleware, async (req, res) => {
             userId: req.user.userId,
             title,
             description,
+            icon,
+            color,
             type,
             frequency,
             daysOfTheWeek,
@@ -51,11 +53,11 @@ router.post("/", authMiddleware, async (req, res) => {
 router.put("/:id", authMiddleware, async(req, res) => {
     try {
         const { id } = req.params;
-        const { title, description, type, frequency, daysOfTheWeek, weeklyDay, activeFrom, activeTo } = req.body;
+        const { title, description, icon, color, type, frequency, daysOfTheWeek, weeklyDay, activeFrom, activeTo } = req.body;
 
         const updatedHabit = await Habit.findOneAndUpdate(
             { _id: id, userId: req.user.userId },
-            { title, description, type, frequency, daysOfTheWeek, weeklyDay, activeFrom, activeTo },
+            { title, description, icon, color, type, frequency, daysOfTheWeek, weeklyDay, activeFrom, activeTo },
             { new: true, runValidators: true }
         );
 
@@ -83,6 +85,11 @@ router.delete("/:id", authMiddleware, async (req, res) => {
         if (!deletedHabit) {
             return res.status(404).json({ message: "Habit not found. "});
         }
+
+        await HabitLog.deleteMany({
+            habitId: id,
+            userId: req.user.userId
+        });
 
         res.json({ message: "Habit deleted successfully." });
     } catch (err) {

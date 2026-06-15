@@ -7,7 +7,6 @@ import {
   Camera,
   LogOut,
   Moon,
-  Pencil,
   Sun,
   Trash2,
   UserRound,
@@ -154,11 +153,6 @@ export default function Profile() {
           <View style={styles.keyboardDismissArea}>
             <BackHeader title="Ustawienia profilu" onBack={() => setActiveView('main')} />
             <Avatar editable uri={currentPhotoUri} onEditPhoto={openPhotoOptions} />
-
-            <View style={styles.goalEditPill}>
-              <ThemedText style={styles.goalText}>{goalText}</ThemedText>
-              <Pencil color={Colors.common.tint} size={16} strokeWidth={1.7} />
-            </View>
 
             <View style={styles.form}>
               <ProfileInput label="Imię" value={firstName} onChangeText={setFirstName} />
@@ -426,7 +420,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   goalPill: {
-    height: 38,
+    height: 40,
     borderRadius: 19,
     borderWidth: 1,
     borderColor: Colors.common.tint,
@@ -436,9 +430,9 @@ const styles = StyleSheet.create({
   },
   goalText: {
     color: Colors.common.tint,
-    fontSize: 12,
-    lineHeight: 14,
-    fontWeight: '700',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '600',
   },
   headerTitle: {
     flex: 1,

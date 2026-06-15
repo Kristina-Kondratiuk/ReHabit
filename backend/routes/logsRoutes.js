@@ -6,6 +6,12 @@ import Habit from "../models/Habit.js";
 
 const router = express.Router();
 
+const getRequestDate = (value) => {
+    const date = value ? new Date(`${value}T00:00:00`) : new Date();
+    date.setHours(0, 0, 0, 0);
+    return date;
+};
+
 // GET /logs?month=2026-05
 router.get("/", authMiddleware, async (req, res) => {
     try {
@@ -46,8 +52,7 @@ router.post("/:habitId/complete", authMiddleware, async (req, res) => {
             });
         }
 
-        const today = new Date();  
-        today.setHours(0, 0, 0, 0); 
+        const selectedDate = getRequestDate(req.body.date);
 
         const habit = await Habit.findOne({
             _id: habitId,
@@ -62,7 +67,7 @@ router.post("/:habitId/complete", authMiddleware, async (req, res) => {
             {
                 habitId: habitId,
                 userId: req.user.userId,
-                date: today
+                date: selectedDate
             },
             {
                 completed: true
@@ -92,8 +97,7 @@ router.delete("/:habitId/complete", authMiddleware, async (req, res) => {
             });
         }
 
-        const today = new Date(); 
-        today.setHours(0, 0, 0, 0); 
+        const selectedDate = getRequestDate(req.body.date);
 
         const habit = await Habit.findOne({
             _id: habitId,
@@ -107,7 +111,7 @@ router.delete("/:habitId/complete", authMiddleware, async (req, res) => {
         const deletedLog = await HabitLog.findOneAndDelete({
             habitId: habitId,
             userId: req.user.userId,
-            date: today,
+            date: selectedDate,
         });
 
         if (!deletedLog) {

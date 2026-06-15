@@ -14,7 +14,6 @@ type HabitTodayProps = {
   icon?: ReactNode;
   color?: HabitColorName;
   completed?: boolean;
-  isCompletionUpdating?: boolean;
   onToggleComplete?: (checked: boolean) => void;
   onEdit?: () => void;
   onDelete?: () => void;
@@ -30,7 +29,6 @@ const HabitToday = ({
     icon,
     color = 'purple',
     completed = false,
-    isCompletionUpdating = false,
     onToggleComplete,
     onEdit,
     onDelete,
@@ -149,7 +147,6 @@ const HabitToday = ({
                         <Animated.View style={[styles.checkboxWrap, { opacity: checkboxOpacity }]}>
                             <TaskCheckbox
                                 checked={completed}
-                                disabled={isCompletionUpdating}
                                 onChange={(nextChecked) => onToggleComplete?.(nextChecked)}
                             />
                         </Animated.View>

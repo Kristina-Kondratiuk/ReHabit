@@ -1,18 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { useFocusEffect } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Colors } from '@/constants/theme';
+import { Colors, habitColorNames, type HabitColorName } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-
-const habits = [
-  { title: 'Pić wodę', color: 'blue' },
-  { title: 'Czytać książki', color: 'green' },
-  { title: 'Jeść śniadanie', color: 'yellow' },
-  { title: 'Ćwiczyć', color: 'purple' },
-] as const;
+import { getHabits } from '@/src/services/habits';
+import { getLogs } from '@/src/services/logs';
+import { useHabitLogsStore, type HabitLog } from '@/src/store/habit-logs-store';
+import { useUserStore } from '@/src/store/user-store';
 
 const monthNames = [
   'Styczeń',
@@ -43,12 +41,98 @@ type CalendarDay = {
   inMonth: boolean;
 };
 
+type HabitFromApi = {
+  _id?: string;
+  id?: string;
+  title: string;
+  color?: string;
+  frequency?: string;
+  daysOfTheWeek?: number[];
+  weeklyDay?: number;
+  activeFrom?: string;
+  activeTo?: string;
+};
+
 const getDateKey = (date: Date) => {
   const year = date.getFullYear();
   const month = `${date.getMonth() + 1}`.padStart(2, '0');
   const day = `${date.getDate()}`.padStart(2, '0');
 
   return `${year}-${month}-${day}`;
+};
+
+const getMonthKey = (date: Date) => {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+
+  return `${year}-${month}`;
+};
+
+const getHabitId = (habit: HabitFromApi) => {
+  return habit._id ?? habit.id ?? habit.title;
+};
+
+const getLogHabitId = (log: HabitLog) => {
+  return String(log.habitId);
+};
+
+const getApiDateKey = (value: string | undefined) => {
+  if (!value) {
+    return undefined;
+  }
+
+  if (!value.includes('T')) {
+    return value;
+  }
+
+  return getDateKey(new Date(value));
+};
+
+const parseApiDate = (value: string | undefined) => {
+  const dateKey = getApiDateKey(value);
+
+  if (!dateKey) {
+    return null;
+  }
+
+  const [year, month, day] = dateKey.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
+const normalizeDate = (date: Date) => {
+  const normalizedDate = new Date(date);
+  normalizedDate.setHours(0, 0, 0, 0);
+  return normalizedDate;
+};
+
+const isHabitColorName = (color: string | undefined): color is HabitColorName => {
+  return Boolean(color && habitColorNames.includes(color as HabitColorName));
+};
+
+const isHabitScheduledForDate = (habit: HabitFromApi, date: Date) => {
+  const currentDate = normalizeDate(date);
+  const activeFrom = parseApiDate(habit.activeFrom);
+  const activeTo = parseApiDate(habit.activeTo);
+
+  if (activeFrom && activeFrom > currentDate) {
+    return false;
+  }
+
+  if (activeTo && activeTo < currentDate) {
+    return false;
+  }
+
+  const currentDay = currentDate.getDay();
+
+  if (habit.frequency === 'weekly') {
+    return habit.weeklyDay === currentDay;
+  }
+
+  if (habit.frequency === 'custom') {
+    return Boolean(habit.daysOfTheWeek?.includes(currentDay));
+  }
+
+  return habit.frequency === 'daily' || !habit.frequency;
 };
 
 const getMonthDays = (monthDate: Date): CalendarDay[] => {
@@ -76,30 +160,103 @@ export default function CalendarScreen() {
   const { width } = useWindowDimensions();
   const themeName = useColorScheme() ?? 'light';
   const theme = Colors[themeName];
+  const token = useUserStore((state) => state.token);
   const [visibleMonth, setVisibleMonth] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState(() => new Date());
-  const [selectedHabitTitles, setSelectedHabitTitles] = useState<string[]>([]);
+  const [habits, setHabits] = useState<HabitFromApi[]>([]);
+  const [selectedHabitIds, setSelectedHabitIds] = useState<string[]>([]);
+  const [calendarError, setCalendarError] = useState<string | null>(null);
+  const habitLogs = useHabitLogsStore((state) => state.logs);
+  const setMonthLogs = useHabitLogsStore((state) => state.setMonthLogs);
+  const replaceLogs = useHabitLogsStore((state) => state.replaceLogs);
   const calendarWidth = Math.min(Math.max(width - 40, 0), calendarMaxWidth);
   const calendarContentWidth = calendarWidth - (calendarPadding + calendarBorderWidth) * 2;
   const daySize = Math.floor((calendarContentWidth - dayGap * 6) / 7);
+  const visibleMonthKey = getMonthKey(visibleMonth);
 
   const days = useMemo(() => getMonthDays(visibleMonth), [visibleMonth]);
   const selectedDateKey = getDateKey(selectedDate);
-  const doneDates = useMemo(
-    () =>
-      new Set([
-        getDateKey(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 13)),
-        getDateKey(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 16)),
-      ]),
-    [visibleMonth],
-  );
-  const unfinishedDates = useMemo(
-    () =>
-      new Set([
-        getDateKey(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 14)),
-        getDateKey(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 15)),
-      ]),
-    [visibleMonth],
+  const completedHabitIdsByDate = useMemo(() => {
+    return habitLogs.reduce<Record<string, Set<string>>>((acc, log) => {
+      if (log.completed === false) {
+        return acc;
+      }
+
+      const dateKey = getApiDateKey(log.date);
+
+      if (!dateKey) {
+        return acc;
+      }
+
+      acc[dateKey] ??= new Set<string>();
+      acc[dateKey].add(getLogHabitId(log));
+
+      return acc;
+    }, {});
+  }, [habitLogs]);
+
+  const getDayCompletionStatus = (date: Date) => {
+    const dateKey = getDateKey(date);
+    const selectedHabitIdSet = new Set(selectedHabitIds);
+    const habitsToCheck = habits.filter((habit) => {
+      const isSelected = selectedHabitIdSet.size === 0 || selectedHabitIdSet.has(getHabitId(habit));
+      return isSelected && isHabitScheduledForDate(habit, date);
+    });
+
+    if (habitsToCheck.length === 0) {
+      return 'empty';
+    }
+
+    const completedHabitIds = completedHabitIdsByDate[dateKey] ?? new Set<string>();
+    const completedCount = habitsToCheck.filter((habit) => completedHabitIds.has(getHabitId(habit))).length;
+
+    if (completedCount === habitsToCheck.length) {
+      return 'done';
+    }
+
+    if (completedCount > 0) {
+      return 'unfinished';
+    }
+
+    return 'empty';
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      const fetchCalendarData = async () => {
+        if (!token) {
+          setHabits([]);
+          replaceLogs([]);
+          return;
+        }
+
+        setCalendarError(null);
+
+        try {
+          const [userHabits, monthLogs] = await Promise.all([
+            getHabits(),
+            getLogs(visibleMonthKey),
+          ]);
+
+          if (isActive) {
+            setHabits(Array.isArray(userHabits) ? userHabits : []);
+            setMonthLogs(visibleMonthKey, Array.isArray(monthLogs) ? monthLogs : []);
+          }
+        } catch {
+          if (isActive) {
+            setCalendarError('Nie udało się pobrać danych kalendarza.');
+          }
+        }
+      };
+
+      void fetchCalendarData();
+
+      return () => {
+        isActive = false;
+      };
+    }, [replaceLogs, setMonthLogs, token, visibleMonthKey])
   );
 
   const goToMonth = (direction: -1 | 1) => {
@@ -109,11 +266,11 @@ export default function CalendarScreen() {
     });
   };
 
-  const toggleHabitFilter = (title: string) => {
-    setSelectedHabitTitles((currentTitles) =>
-      currentTitles.includes(title)
-        ? currentTitles.filter((selectedTitle) => selectedTitle !== title)
-        : [...currentTitles, title]
+  const toggleHabitFilter = (habitId: string) => {
+    setSelectedHabitIds((currentIds) =>
+      currentIds.includes(habitId)
+        ? currentIds.filter((selectedHabitId) => selectedHabitId !== habitId)
+        : [...currentIds, habitId]
     );
   };
 
@@ -132,23 +289,25 @@ export default function CalendarScreen() {
         style={styles.habitScroller}
       >
         {habits.map((habit) => {
-          const isHabitSelected = selectedHabitTitles.includes(habit.title);
-          const activeHabitColor = Colors.common[habit.color];
+          const habitId = getHabitId(habit);
+          const habitColor = isHabitColorName(habit.color) ? habit.color : 'purple';
+          const isHabitSelected = selectedHabitIds.includes(habitId);
+          const activeHabitColor = Colors.common[habitColor];
 
           return (
             <Pressable
-              key={habit.title}
+              key={habitId}
               accessibilityRole="checkbox"
               accessibilityState={{ checked: isHabitSelected }}
-              onPress={() => toggleHabitFilter(habit.title)}
+              onPress={() => toggleHabitFilter(habitId)}
               style={[
                 styles.habitChip,
                 {
-                  backgroundColor: Colors[themeName][habit.color],
+                  backgroundColor: Colors[themeName][habitColor],
                   borderColor: isHabitSelected ? activeHabitColor : 'transparent',
                   shadowColor: activeHabitColor,
-                  shadowOpacity: isHabitSelected && themeName === 'dark' ? 1 : 0,
-                  elevation: isHabitSelected && themeName === 'dark' ? 4 : 0,
+                  shadowOpacity: isHabitSelected ? 0.75 : 0,
+                  elevation: isHabitSelected ? 4 : 0,
                 },
               ]}
             >
@@ -159,6 +318,10 @@ export default function CalendarScreen() {
           );
         })}
       </ScrollView>
+
+      {calendarError ? (
+        <ThemedText style={styles.errorText}>{calendarError}</ThemedText>
+      ) : null}
 
       <View style={styles.monthHeader}>
         <Pressable
@@ -198,8 +361,9 @@ export default function CalendarScreen() {
           {days.map((calendarDay) => {
             const dateKey = getDateKey(calendarDay.date);
             const isSelected = dateKey === selectedDateKey;
-            const isDone = doneDates.has(dateKey);
-            const isUnfinished = unfinishedDates.has(dateKey);
+            const completionStatus = getDayCompletionStatus(calendarDay.date);
+            const isDone = completionStatus === 'done';
+            const isUnfinished = completionStatus === 'unfinished';
             const dayBackgroundColor = isDone
               ? doneColor
               : isUnfinished
@@ -291,6 +455,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 14,
     fontWeight: '500',
+  },
+  errorText: {
+    color: Colors.common.error,
+    fontSize: 12,
+    lineHeight: 16,
+    textAlign: 'center',
+    marginBottom: 12,
   },
   monthHeader: {
     width: '100%',

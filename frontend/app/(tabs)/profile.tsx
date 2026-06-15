@@ -8,7 +8,6 @@ import {
   LogOut,
   Moon,
   Pencil,
-  Smartphone,
   Sun,
   Trash2,
   UserRound,
@@ -186,12 +185,6 @@ export default function Profile() {
         <BackHeader title="Motyw aplikacji" onBack={() => setActiveView('main')} />
 
         <View style={styles.optionList}>
-          <ThemeOption
-            title="Kolor systemu"
-            icon={Smartphone}
-            selected={themePreference === 'system'}
-            onPress={() => void setThemePreference('system')}
-          />
           <ThemeOption
             title="Ciemny"
             icon={Moon}

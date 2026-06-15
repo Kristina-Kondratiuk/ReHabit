@@ -10,6 +10,7 @@ import { HorizontalCalendar } from "@/components/ui/horizontal-calendar";
 import { useUserStore } from "@/src/store/user-store";
 import { deleteHabit, getHabits } from "@/src/services/habits";
 import { completeHabitForDate, getLogs, uncompleteHabitForDate } from "@/src/services/logs";
+import { useHabitLogsStore, type HabitLog } from "@/src/store/habit-logs-store";
 import {
   habitIconMap,
   type HabitIconName,
@@ -30,13 +31,6 @@ type HabitFromApi = {
   activeTo?: string;
 };
 
-type HabitLogFromApi = {
-  _id?: string;
-  habitId: string;
-  date: string;
-  completed?: boolean;
-};
-
 const isHabitIconName = (icon: string | undefined): icon is HabitIconName => {
   return Boolean(icon && icon in habitIconMap);
 };
@@ -50,7 +44,15 @@ const getFirstName = (value: string | undefined) => {
 };
 
 const toDateParam = (value: string | undefined) => {
-  return value?.split('T')[0];
+  if (!value) {
+    return undefined;
+  }
+
+  if (!value.includes('T')) {
+    return value;
+  }
+
+  return toDateString(new Date(value));
 };
 
 const toDateString = (date: Date) => {
@@ -108,7 +110,15 @@ const isHabitScheduledForDate = (habit: HabitFromApi, date: Date) => {
   return habit.frequency === 'daily' || !habit.frequency;
 };
 
-const isLogForDate = (log: HabitLogFromApi, dateString: string) => {
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return 'Nie udało się zapisać wykonania nawyku.';
+};
+
+const isLogForDate = (log: HabitLog, dateString: string) => {
   return toDateParam(log.date) === dateString;
 };
 
@@ -117,11 +127,17 @@ export default function HomeScreen() {
   const user = useUserStore((state) => state.user);
   const token = useUserStore((state) => state.token);
   const [habits, setHabits] = useState<HabitFromApi[]>([]);
-  const [habitLogs, setHabitLogs] = useState<HabitLogFromApi[]>([]);
   const [updatingCompletionKeys, setUpdatingCompletionKeys] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [isLoadingHabits, setIsLoadingHabits] = useState(false);
   const [habitsError, setHabitsError] = useState<string | null>(null);
+  const habitLogs = useHabitLogsStore((state) => state.logs);
+  const setMonthLogs = useHabitLogsStore((state) => state.setMonthLogs);
+  const replaceLogs = useHabitLogsStore((state) => state.replaceLogs);
+  const markComplete = useHabitLogsStore((state) => state.markComplete);
+  const confirmComplete = useHabitLogsStore((state) => state.confirmComplete);
+  const markIncomplete = useHabitLogsStore((state) => state.markIncomplete);
+  const removeHabitLogs = useHabitLogsStore((state) => state.removeHabitLogs);
   const greetingName = getFirstName(user?.username) || getFirstName(user?.email?.split('@')[0]);
   const selectedDateString = toDateString(selectedDate);
   const selectedMonthString = toMonthString(selectedDate);
@@ -179,7 +195,7 @@ export default function HomeScreen() {
             setHabits((currentHabits) =>
               currentHabits.filter((currentHabit) => (currentHabit._id ?? currentHabit.id) !== habitId)
             );
-            setHabitLogs((currentLogs) => currentLogs.filter((log) => String(log.habitId) !== habitId));
+            removeHabitLogs(habitId);
           } catch {
             Alert.alert('Błąd', 'Nie udało się usunąć nawyku.');
           }
@@ -195,7 +211,7 @@ export default function HomeScreen() {
       const fetchDashboardData = async () => {
         if (!token) {
           setHabits([]);
-          setHabitLogs([]);
+          replaceLogs([]);
           return;
         }
 
@@ -210,7 +226,7 @@ export default function HomeScreen() {
 
           if (isActive) {
             setHabits(Array.isArray(userHabits) ? userHabits : []);
-            setHabitLogs(Array.isArray(monthLogs) ? monthLogs : []);
+            setMonthLogs(selectedMonthString, Array.isArray(monthLogs) ? monthLogs : []);
           }
         } catch {
           if (isActive) {
@@ -228,7 +244,7 @@ export default function HomeScreen() {
       return () => {
         isActive = false;
       };
-    }, [selectedMonthString, token])
+    }, [replaceLogs, selectedMonthString, setMonthLogs, token])
   );
 
   const handleToggleComplete = async (habit: HabitFromApi, nextChecked: boolean) => {
@@ -239,45 +255,32 @@ export default function HomeScreen() {
     }
 
     const completionKey = `${habitId}-${selectedDateString}`;
+
+    if (updatingCompletionKeys.includes(completionKey)) {
+      return;
+    }
+
     const previousLogs = habitLogs;
 
     setUpdatingCompletionKeys((currentKeys) => [...currentKeys, completionKey]);
-    setHabitLogs((currentLogs) => {
-      const logsWithoutSelected = currentLogs.filter(
-        (log) => !(String(log.habitId) === habitId && isLogForDate(log, selectedDateString))
-      );
 
-      if (!nextChecked) {
-        return logsWithoutSelected;
-      }
-
-      return [
-        ...logsWithoutSelected,
-        {
-          habitId,
-          date: selectedDateString,
-          completed: true,
-        },
-      ];
-    });
+    if (nextChecked) {
+      markComplete(habitId, selectedDateString);
+    } else {
+      markIncomplete(habitId, selectedDateString);
+    }
 
     try {
-      const updatedLog = nextChecked
-        ? await completeHabitForDate(habitId, selectedDateString)
-        : await uncompleteHabitForDate(habitId, selectedDateString);
+      const savedLog = await (nextChecked
+        ? completeHabitForDate(habitId, selectedDateString)
+        : uncompleteHabitForDate(habitId, selectedDateString));
 
       if (nextChecked) {
-        setHabitLogs((currentLogs) => {
-          const logsWithoutSelected = currentLogs.filter(
-            (log) => !(String(log.habitId) === habitId && isLogForDate(log, selectedDateString))
-          );
-
-          return [...logsWithoutSelected, updatedLog];
-        });
+        confirmComplete(habitId, selectedDateString, savedLog);
       }
-    } catch {
-      setHabitLogs(previousLogs);
-      Alert.alert('Błąd', 'Nie udało się zapisać wykonania nawyku.');
+    } catch (error) {
+      replaceLogs(previousLogs);
+      Alert.alert('Błąd', getErrorMessage(error));
     } finally {
       setUpdatingCompletionKeys((currentKeys) => currentKeys.filter((key) => key !== completionKey));
     }
@@ -288,7 +291,6 @@ export default function HomeScreen() {
     const iconName = isHabitIconName(habit.icon) ? habit.icon : 'droplet';
     const Icon = habitIconMap[iconName];
     const color = isHabitColorName(habit.color) ? habit.color : 'purple';
-    const completionKey = `${habitId}-${selectedDateString}`;
 
     return (
       <HabitToday
@@ -297,7 +299,6 @@ export default function HomeScreen() {
         icon={<Icon size={28} strokeWidth={1.5} />}
         color={color}
         completed={completedHabitIds.has(habitId)}
-        isCompletionUpdating={updatingCompletionKeys.includes(completionKey)}
         onToggleComplete={(nextChecked) => handleToggleComplete(habit, nextChecked)}
         onEdit={() => handleEditHabit(habit)}
         onDelete={() => handleDeleteHabit(habit)}

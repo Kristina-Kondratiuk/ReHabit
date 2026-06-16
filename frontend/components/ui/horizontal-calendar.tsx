@@ -23,6 +23,7 @@ const formatDateForCalendar = (date: Date) => {
 type CalendarDayProps = {
   date?: DateData;
   selected?: boolean;
+  isToday?: boolean;
   dayWidth: number;
   onPress?: (date?: DateData) => void;
 };
@@ -31,11 +32,14 @@ type HorizontalCalendarProps = {
   onDateChange?: (date: Date) => void;
 };
 
-const CalendarDay = ({ date, selected = false, dayWidth, onPress }: CalendarDayProps) => {
+const CalendarDay = ({ date, selected = false, isToday = false, dayWidth, onPress }: CalendarDayProps) => {
   const themeName = useColorScheme() ?? 'light';
   const theme = Colors[themeName];
   const weekdayIndex = date ? new Date(date.timestamp).getDay() : 1;
   const weekday = date ? weekdayLabels[weekdayIndex === 0 ? 6 : weekdayIndex - 1] : '';
+  const textColor = isToday ? Colors.common.white : theme.text;
+  const backgroundColor = isToday ? Colors.common.tint : theme.background;
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -45,14 +49,14 @@ const CalendarDay = ({ date, selected = false, dayWidth, onPress }: CalendarDayP
         styles.day,
         {
           borderColor: Colors.common.tint,
-          backgroundColor: theme.background,
+          backgroundColor,
           width: dayWidth,
         },
       ]}
     >
-      <Text style={[styles.dayNumber, { color: theme.text }]}>{date?.day}</Text>
-      <Text style={[styles.weekday, { color: theme.text }]}>{weekday}</Text>
-      {selected ? <View style={[styles.dot, { backgroundColor: Colors.common.tint }]} /> : null}
+      <Text style={[styles.dayNumber, { color: textColor }]}>{date?.day}</Text>
+      <Text style={[styles.weekday, { color: textColor }]}>{weekday}</Text>
+      {selected && !isToday ? <View style={[styles.dot, { backgroundColor: Colors.common.tint }]} /> : null}
     </Pressable>
   );
 };
@@ -63,16 +67,9 @@ export const HorizontalCalendar = ({ onDateChange }: HorizontalCalendarProps) =>
   const themeName = useColorScheme() ?? 'light';
   const theme = Colors[themeName];
   const selectedDateString = formatDateForCalendar(selectedDate);
+  const todayDateString = useMemo(() => formatDateForCalendar(new Date()), []);
   const calendarWidth = Math.max(0, width - screenHorizontalPadding * 2);
   const dayWidth = Math.max(40, (calendarWidth - dayGap * (daysInWeek - 1)) / daysInWeek);
-  const markedDates = useMemo(
-    () => ({
-      [selectedDateString]: {
-        selected: true,
-      },
-    }),
-    [selectedDateString],
-  );
   const calendarTheme = useMemo(
     () => ({
       backgroundColor: 'transparent',
@@ -130,14 +127,15 @@ export const HorizontalCalendar = ({ onDateChange }: HorizontalCalendarProps) =>
           firstDay={1}
           allowShadow={false}
           hideDayNames
-          markedDates={markedDates}
+          extraData={selectedDateString}
           onDayPress={handleDayPress}
           style={styles.weekRow}
           theme={calendarTheme}
-          dayComponent={({ date, marking }) => (
+          dayComponent={({ date }) => (
             <CalendarDay
               date={date}
-              selected={Boolean(marking?.selected)}
+              selected={date?.dateString === selectedDateString}
+              isToday={date?.dateString === todayDateString}
               dayWidth={dayWidth}
               onPress={handleDayPress}
             />

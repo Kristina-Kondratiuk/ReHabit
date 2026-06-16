@@ -1,50 +1,245 @@
-# Welcome to your Expo app 👋
+# ReHabit
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+ReHabit is a mobile habit-tracking app for creating, completing, and analyzing personal habits. The project is split into an Expo/React Native frontend and a Node.js/Express backend backed by MongoDB.
 
-## Get started
+## Features
 
-1. Install dependencies
+- User registration and JWT-based authentication.
+- Create habits for building positive routines or quitting unwanted behaviors.
+- Configure habit title, description, icon, color, start date, end date, and schedule.
+- Supported schedules: daily, weekly, or custom days of the week.
+- Mark habits as completed for a selected date.
+- Calendar view with visual completion status.
+- Statistics screen with current streak, longest streak, completion rate, and recent activity chart.
+- User profile management, profile photo support, and light/dark theme switching.
 
-   ```bash
-   npm install
-   ```
+## Tech Stack
 
-2. Start the app
+### Frontend
 
-   ```bash
-   npx expo start
-   ```
+- Expo 54
+- React Native 0.81
+- Expo Router
+- TypeScript
+- Zustand
+- Axios
+- React Hook Form, Zod
+- React Native Chart Kit
+- Lucide React Native
 
-In the output, you'll find options to open the app in a
+### Backend
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- Node.js
+- Express 5
+- MongoDB, Mongoose
+- JWT
+- bcryptjs
+- dotenv
+- cors
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Project Structure
 
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```text
+ReHabit/
+├── backend/
+│   ├── config/          # MongoDB connection
+│   ├── middleware/      # JWT middleware
+│   ├── models/          # Mongoose models
+│   ├── routes/          # API routes
+│   ├── package.json
+│   └── server.js
+├── frontend/
+│   ├── app/             # Expo Router screens and navigation
+│   ├── components/      # UI components
+│   ├── constants/       # Theme, colors, habit presets
+│   ├── hooks/
+│   ├── src/
+│   │   ├── context/     # Auth context
+│   │   ├── services/    # API clients
+│   │   ├── store/       # Zustand stores
+│   │   ├── utils/
+│   │   └── validation/
+│   ├── app.json
+│   └── package.json
+└── README.md
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Requirements
 
-## Learn more
+- Node.js 20 or newer
+- npm
+- MongoDB Atlas or a local MongoDB instance
+- Expo Go on a physical device, or an Android/iOS emulator
 
-To learn more about developing your project with Expo, look at the following resources:
+## Getting Started
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### 1. Clone the repository
 
-## Join the community
+```bash
+git clone <repository-url>
+cd ReHabit
+```
 
-Join our community of developers creating universal apps.
+### 2. Set up the backend
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+cd backend
+npm install
+```
+
+Create a `.env` file inside the `backend` directory:
+
+```env
+PORT=5000
+MONGO_URI=<your-mongodb-connection-string>
+JWT_SECRET=<your-jwt-secret>
+```
+
+Start the backend server:
+
+```bash
+npm run dev
+```
+
+The API will be available at:
+
+```text
+http://localhost:5000
+```
+
+### 3. Set up the frontend
+
+Open another terminal:
+
+```bash
+cd frontend
+npm install
+npm start
+```
+
+After Expo starts, you can open the app in Expo Go, an Android emulator, an iOS simulator, or the web version.
+
+> `frontend/src/services/api.js` currently points to the deployed API at `https://rehabit-jdci.onrender.com/`. For local development, change `baseURL` to your local backend URL, for example `http://localhost:5000/`.
+
+## Available Scripts
+
+### Backend
+
+```bash
+npm start      # start server.js
+npm run dev    # start with nodemon
+```
+
+### Frontend
+
+```bash
+npm start      # start Expo
+npm run android
+npm run ios
+npm run web
+npm run lint
+```
+
+## API Overview
+
+Most routes, except registration and login, require the following header:
+
+```text
+Authorization: Bearer <token>
+```
+
+### Auth
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| POST | `/auth/register` | Register a new user |
+| POST | `/auth/login` | Log in a user |
+| GET | `/auth/me` | Get the current user |
+| PATCH | `/auth/me` | Update username or email |
+| PATCH | `/auth/me/photo` | Update profile photo |
+
+### Habits
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| GET | `/habits` | Get the user's habits |
+| POST | `/habits` | Create a habit |
+| PUT | `/habits/:id` | Update a habit |
+| DELETE | `/habits/:id` | Delete a habit and its logs |
+| GET | `/habits/today` | Get habits active today |
+
+### Logs
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| GET | `/logs?month=YYYY-MM` | Get completion logs for a month |
+| POST | `/logs/:habitId/complete` | Mark a habit as completed |
+| DELETE | `/logs/:habitId/complete` | Mark a habit as incomplete |
+| GET | `/logs/habit/:habitId/logs` | Get all logs for a specific habit |
+
+### Statistics
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| GET | `/statistics` | Get streaks, completion rate, and daily completion data |
+
+## Data Models
+
+### User
+
+- `username`
+- `email`
+- `passwordHash`
+- `photoUri`
+- `createdAt`
+
+### Habit
+
+- `userId`
+- `title`
+- `description`
+- `icon`
+- `color`
+- `type`: `build` or `quit`
+- `frequency`: `daily`, `weekly`, or `custom`
+- `daysOfTheWeek`
+- `weeklyDay`
+- `activeFrom`
+- `activeTo`
+- `createdAt`
+
+### HabitLog
+
+- `habitId`
+- `userId`
+- `date`
+- `completed`
+
+## Quality Checks
+
+The frontend includes a lint script:
+
+```bash
+cd frontend
+npm run lint
+```
+
+Automated tests are not configured yet.
+
+## Development Notes
+
+- Passwords are stored as bcrypt hashes.
+- JWT tokens expire after 7 days.
+- Habit logs have a unique index on `habitId`, `userId`, and `date`.
+- Deleting a habit also deletes its related logs.
+
+## Future Improvements
+
+- Add automated tests for backend routes, authentication, habit scheduling, and statistics calculations.
+- Add frontend tests for key user flows such as registration, login, habit creation, completion, and calendar filtering.
+- Implement full account deletion from the profile screen.
+- Improve error handling and loading states across the mobile app.
+- Add password reset and email verification flows.
+- Add push notifications and habit reminders.
+- Add more detailed analytics, such as weekly/monthly summaries and habit-specific progress charts.
+
